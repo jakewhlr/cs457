@@ -1,0 +1,27 @@
+#!/bin/bash
+
+CHANGELOG_DIRECTORY=""
+FILES=""
+
+function get_args() {
+  if [[ -z $1 ]]; then
+    CHANGELOG_DIRECTORY="./"
+  else
+    CHANGELOG_DIRECTORY=$1
+  fi
+
+  return 0
+}
+
+function main() {
+  get_args $@
+  FILES=$(find ${CHANGELOG_DIRECTORY} -type d -name ".git" -prune -o -type f -print)
+  for file in ${FILES}; do
+    echo ${file}
+    git log --since="last month" --pretty=format:'%h,%an,%ar,%s' -- ${file}
+    echo ""
+  done
+}
+
+main $@
+exit $?
