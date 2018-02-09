@@ -20,7 +20,11 @@ class Interface(object):
         """Begins accepting user input until the ExitCommand is
         encountered"""
         while True:
-            read_input = input()
+            try:
+                read_input = input()
+            except EOFError:
+                return self.__exit__ # This might need arguments xd
+
             if not read_input.startswith(self.default_config['CommentPrefix']):
                 print('You said: ' + read_input.strip())
             if read_input.strip() == self.default_config['ExitCommand']:
