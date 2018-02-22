@@ -3,6 +3,7 @@
 import configparser
 import os
 import sys
+import shutil
 
 class Interface(object):
     """Class docstring"""
@@ -50,6 +51,16 @@ class Interface(object):
                         print("ERROR: CREATE " + self.create_options['database'] + ": Option requires a name.", file=sys.stderr) # stderr
                     else:
                         self.create_db(split_input[2])
+            if split_input[0].strip() == self.commands_config['DeleteCommand']:
+                # delete database
+                if split_input[1] == self.create_options['database']: # if option is database
+                    self.delete_db((split_input[2]))
+
+            if split_input[0].strip() == self.commands_config['DeleteCommand']:
+                # delete database
+                if split_input[1] == self.create_options['database']: # if option is database
+                    self.delete_db((split_input[2]))
+
 
 
     def read_config_file(self, filename):
@@ -61,6 +72,7 @@ class Interface(object):
         self.default_config = config['DEFAULT']
         self.commands_config = config['COMMANDS']
         self.create_options = config['CREATE_OPTS']
+        #self.delete_options =
 
     def create_db(self, name):
         """Creates database as directory"""
@@ -77,3 +89,33 @@ class Interface(object):
 
     def create_table(self, name):
         """Creates table as file"""
+
+
+    def delete_db(self, name):
+        """Delete database as directory"""
+        current_dir = os.getcwd()
+        database_dir = os.path.join(current_dir, "databases")
+
+        # check if databse exist
+        if os.path.exists(database_dir + "/" + name):
+            shutil.rmtree(database_dir + "/" + name)
+        else:
+            print ("!Failed to delete",name,"because it does not exist.")
+
+    def delete_table(self, name):
+        """Delete database as directory"""
+        current_dir = os.getcwd()
+        database_dir = os.path.join(current_dir, "databases")
+
+        # check if table exist
+        if os.path.exists(database_dir + "/" + name):
+            os.remove(database_dir + "/" + name)
+        else:
+            print ("!Failed to delete",name,"because it does not exist.")
+
+
+    # USE FOR db
+
+    # SELECT for table
+
+    # ALTER for update
