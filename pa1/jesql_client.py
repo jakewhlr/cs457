@@ -79,8 +79,16 @@ class Interface(object):
             if split_input[0].strip() == self.commands_config['UseCommand']:
                 self.use_db(split_input[1])
 
+            # SELECT
+            if split_input[0].strip() == self.commands_config['SelectCommand']:
+                if len(split_input) < 4:
+                    print("Expected 4 arguments.", file=sys.stderr) # stderr
+                    break
 
-    def read_config_file(self, filename):python ignore parentheses
+                if split_input[2] == 'FROM':
+                    self.select(split_input[1].strip(), split_input[3].strip())
+
+    def read_config_file(self, filename):
         """Reads in a specified config file. Currently it will only
         read in settings under the DEFAULT heading. Should prolly
         fix"""
@@ -93,8 +101,7 @@ class Interface(object):
 
     def create_db(self, name):
         """Creates database as directory"""
-        current_dir = os.getcwd()
-        database_dir = os.path.join(current_dir, "databases")
+        database_dir = os.path.join(sys.path[0], "databases")
 
         if not os.path.exists(database_dir): # if databases dir doesn't exist
             os.makedirs(database_dir) # create it
@@ -110,8 +117,7 @@ class Interface(object):
 
     def delete_db(self, name):
         """Delete database as directory"""
-        current_dir = os.getcwd()
-        database_dir = os.path.join(current_dir, "databases")
+        database_dir = os.path.join(sys.path[0], "databases")
 
         # check if databse exist
         if os.path.exists(database_dir + "/" + name):
@@ -122,8 +128,7 @@ class Interface(object):
 
     def delete_table(self, name):
         """Delete database as directory"""
-        current_dir = os.getcwd()
-        database_dir = os.path.join(current_dir, "databases")
+        database_dir = os.path.join(sys.path[0], "databases")
 
         # check if table exist
         if os.path.exists(database_dir + "/" + name):
@@ -136,8 +141,7 @@ class Interface(object):
     # USE FOR db
     def use_db(self, name):
         """use named database"""
-        current_dir = os.getcwd()
-        database_dir = os.path.join(current_dir, "databases")
+        database_dir = os.path.join(sys.path[0], "databases")
 
         # check if databse exist
         if os.path.isdir(database_dir + "/" + name):
@@ -145,7 +149,31 @@ class Interface(object):
         else:
             print ("!Failed to delete",name,"because it does not exist.") # Wrong print?
 
-
     # SELECT for table
+    def select(self, cols ,table):
+        table_path = os.path.join(os.getcwd(), table)
+        col_indexes = []
+        if not os.path.exists(table_path):
+            print ("!Failed to query table", table, "because it does not exist.")
+            return
+        with open(table_path) as f:
+            lines = f.readlines()
+        for index, line in enumerate(lines):
+            lines[index] = line.split('|')
+            for col_index, col in enumerate(lines[index]):
+                lines[index][col_index] = col.strip()
+        for header_index, header in enumerate(lines[0]):
+            lines[0][header_index] = header.split(' ')
+            if lines[0][header_index][0] == cols:
+                col_indexes.append(header_index)
+        if cols is '*':
+            col_indexes = range(0, len(lines[0]))
+
+        for row_index, row in enumerate(lines):
+            for col in col_indexes:
+                print(*row[col], sep=" ", end='')
+                if col is not col_indexes[len(col_indexes)-1]:
+                    print(" | ", end='')
+            print('')
 
     # ALTER for update
