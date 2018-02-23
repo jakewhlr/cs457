@@ -143,7 +143,7 @@ class Interface(object):
         if os.path.isdir(database_dir + "/" + name):
             os.chdir(database_dir + "/" + name)
         else:
-            print ("!Failed to delete",name,"because it does not exist.")
+            print ("!Failed to delete",name,"because it does not exist.") # Wrong print?
 
 
     # SELECT for table
