@@ -24,7 +24,7 @@ class Interface(object):
         encountered"""
         while True:
             try:
-                read_input = input()
+                read_input = input('jesql> ')
             except EOFError:
                 return self.__exit__ # This might need arguments xd
 
