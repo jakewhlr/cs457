@@ -192,7 +192,6 @@ class Interface(object):
     # ALTER for update
     def alter(self, tbName, indexName, input_type):
         table_path = os.path.join(os.getcwd(), tbName)
-        col_indexes = []
 
         if not os.path.exists(table_path):
             print ("!Failed to query table", tbName, "because it does not exist.")
