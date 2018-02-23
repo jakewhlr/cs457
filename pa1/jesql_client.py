@@ -107,7 +107,7 @@ class Interface(object):
     def create_table(self, name):
         """Creates table as file"""
 
-
+    # delete databse
     def delete_db(self, name):
         """Delete database as directory"""
         current_dir = os.getcwd()
