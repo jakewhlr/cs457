@@ -206,3 +206,5 @@ class Interface(object):
 
         with open(table_path, "w") as alterFile:
             alterFile.write(converted_to_string + ' ' + '|' + ' ' + indexName + ' ' + input_type )
+
+        print("Table" + tbName+" modified.")
