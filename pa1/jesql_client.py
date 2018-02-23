@@ -107,9 +107,10 @@ class Interface(object):
             os.makedirs(database_dir) # create it
 
         if os.path.exists(database_dir + "/" + name):
-            print("ERROR: Database \"" + name + "\" exists.", file=sys.stderr) # stderr?
+            print("!Failed to create database", name, "because it already exists.")
         else:
             os.makedirs(database_dir + "/" + name)
+            print("Database", name, "created.")
 
     def create_table(self, name):
         """Creates table as file"""
@@ -124,7 +125,7 @@ class Interface(object):
             # delete the entire dir & files inside
             shutil.rmtree(database_dir + "/" + name)
         else:
-            print ("!Failed to delete",name,"because it does not exist.")
+            print ("!Failed to delete", name, "because it does not exist.")
 
     def delete_table(self, name):
         """Delete database as directory"""
@@ -135,7 +136,7 @@ class Interface(object):
             # remove file only
             os.remove(database_dir + "/" + name)
         else:
-            print ("!Failed to delete",name,"because it does not exist.")
+            print ("!Failed to delete", name, "because it does not exist.")
 
 
     # USE FOR db
@@ -146,8 +147,9 @@ class Interface(object):
         # check if databse exist
         if os.path.isdir(database_dir + "/" + name):
             os.chdir(database_dir + "/" + name)
+            print("Using Database", name + ".")
         else:
-            print ("!Failed to delete",name,"because it does not exist.") # Wrong print?
+            print ("!Failed to use", name, "because it does not exist.")
 
     # SELECT for table
     def select(self, cols ,table):
