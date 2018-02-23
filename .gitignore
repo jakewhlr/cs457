@@ -1,2 +1,6 @@
+## python stuff
 __pycache__/
 *.py[cod]
+
+## misc
+.~lock*
