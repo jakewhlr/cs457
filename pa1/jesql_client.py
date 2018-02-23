@@ -153,22 +153,27 @@ class Interface(object):
 
     # SELECT for table
     def select(self, cols ,table):
+        """Selects columns from given table, prints output"""
         table_path = os.path.join(os.getcwd(), table)
         col_indexes = []
         if not os.path.exists(table_path):
             print ("!Failed to query table", table, "because it does not exist.")
             return
-        with open(table_path) as f:
-            lines = f.readlines()
+
+        with open(table_path) as input_file:
+            lines = input_file.readlines()
+
         for index, line in enumerate(lines):
             lines[index] = line.split('|')
             for col_index, col in enumerate(lines[index]):
                 lines[index][col_index] = col.strip()
+
         for header_index, header in enumerate(lines[0]):
             lines[0][header_index] = header.split(' ')
-            if lines[0][header_index][0] == cols:
+            if lines[0][header_index][0] == cols: # if col matches, note index
                 col_indexes.append(header_index)
-        if cols is '*':
+
+        if cols is '*': # '*' selects all columns
             col_indexes = range(0, len(lines[0]))
 
         for row_index, row in enumerate(lines):
