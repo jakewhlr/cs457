@@ -120,6 +120,7 @@ class Interface(object):
         else:
             print ("!Failed to delete",name,"because it does not exist.")
 
+    # delete table
     def delete_table(self, name):
         """Delete database as directory"""
         current_dir = os.getcwd()
