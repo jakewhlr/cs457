@@ -208,3 +208,19 @@ class Interface(object):
             print('')
 
     # ALTER for update
+    def alter(self, tbName, indexName, input_type):
+        table_path = os.path.join(os.getcwd(), tbName)
+
+        if not os.path.exists(table_path):
+            print ("!Failed to query table", tbName, "because it does not exist.")
+            return
+
+        org_file = open(table_path, 'r')
+
+        # read file into list formatt
+        read_file = org_file.read().splitlines()
+
+        converted_to_string = ''.join(read_file)
+
+        with open(table_path, "w") as alterFile:
+            alterFile.write(converted_to_string + ' ' + '|' + ' ' + indexName + ' ' + input_type )
