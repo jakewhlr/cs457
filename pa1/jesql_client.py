@@ -28,65 +28,8 @@ class Interface(object):
             except EOFError:
                 return self.__exit__ # This might need arguments xd
 
-            split_input = read_input.split(" ")
-
-            if split_input[0].startswith(self.default_config['CommentPrefix']):
-                print('Comment: ' + read_input)
-
-            if read_input.strip() == self.commands_config['ExitCommand']:
-                break
-
-            if not split_input[0] in self.commands_config:
-                print("ERROR: " + split_input[0] + ": Command not found.", file=sys.stderr)
-
-            # CREATE
-            if split_input[0].strip() == self.commands_config['CreateCommand']:
-                if len(split_input) < 2:
-                    print("ERROR: " + split_input[0] + ": No option specified.", file=sys.stderr) # stderr
-
-                elif not split_input[1] in self.create_options: # if command doesn't exist
-                    print("ERROR: " + split_input[0] + ": Invalid type: " + split_input[1], file=sys.stderr) # stderr
-
-                # Create database
-                elif split_input[1] == self.create_options['database']: # if option is database
-                    if len(split_input) < 3: # if no 3rd option
-                        print("ERROR: CREATE " + self.create_options['database'] + ": Option requires a name.", file=sys.stderr) # stderr
-                    else:
-                        self.create_db(split_input[2])
-
-                # create table
-                if split_input[0].strip() == self.commands_config['CreateCommand']:
-                    if  split_input[1] == self.create_options['table']:
-                #        self.create_table(split_input[2])
-                        print ("split_input[2]: ", split_input[2])
-                        print ("split_input[3]: ", split_input[3])
-                        print ("split_input[4]: ", split_input[4])
-                        print ("split_input[5]: ", split_input[5])
-                        print ("split_input[6]: ", split_input[6])
-
-
-            # DROP
-            if split_input[0].strip() == self.commands_config['DeleteCommand']:
-                # delete database
-                if split_input[1] == self.create_options['database']:
-                    self.delete_db(split_input[2])
-
-                # delete table
-                elif  split_input[1] == self.create_options['table']:
-                    self.delete_table(split_input[2])
-
-            # USE
-            if split_input[0].strip() == self.commands_config['UseCommand']:
-                self.use_db(split_input[1])
-
-            # SELECT
-            if split_input[0].strip() == self.commands_config['SelectCommand']:
-                if len(split_input) < 4:
-                    print("Expected 4 arguments.", file=sys.stderr) # stderr
-                    break
-
-                if split_input[2] == 'FROM':
-                    self.select(split_input[1].strip(), split_input[3].strip())
+            if self.parse_input(read_input.strip()) == 255:
+                return self.__exit__
 
     def read_config_file(self, filename):
         """Reads in a specified config file. Currently it will only
@@ -97,6 +40,51 @@ class Interface(object):
         self.default_config = config['DEFAULT']
         self.commands_config = config['COMMANDS']
         self.create_options = config['CREATE_OPTS']
+
+    def parse_input(self, read_input):
+        if read_input.startswith(self.default_config['CommentPrefix']):
+            return 0
+        elif read_input == self.commands_config['ExitCommand']:
+            return 255
+
+        split_input = read_input.split(' ');
+
+        for (key, value) in self.commands_config.items():
+            if split_input[0].lower() == value.lower():
+                try:
+                    return getattr(self, value.lower())(split_input[1:])
+                except AttributeError:
+                    print('ERROR: ' + split_input[0] + ' was included but not defined',
+                          file=sys.stderr)
+                    raise
+
+        print('ERROR: ' + split_input[0] + ': Command not found.', file=sys.stderr)
+
+    def create(self, args):
+        if len(args) != 2:
+            print('ERROR: CREATE: invalid number of options specified.', file=sys.stderr) # stderr
+            return 1
+        elif not args[0] in self.create_options: # if command doesn't exist
+            print('ERROR: CREATE: Invalid type: ' + args[0], file=sys.stderr) # stderr
+            return 1
+
+        if args[0].lower() == self.create_options['database'].lower(): # if option is database
+            self.create_db(args[1])
+        elif args[0].lower() == self.create_options['table'].lower():
+            self.create_table('TODO')
+
+    def drop(self, args):
+        if len(args) != 2:
+            print('ERROR: DROP: invalid number of options specified.', file=sys.stderr) # stderr
+            return 1
+        elif not args[0] in self.create_options: # if command doesn't exist
+            print('ERROR: DROP: Invalid type: ' + args[0], file=sys.stderr) # stderr
+            return 1
+
+        if args[0].lower() == self.create_options['database'].lower():
+            self.delete_db(args[1])
+        elif args[0].lower() == self.create_options['table'].lower():
+            self.delete_table(args[1])
 
 
     def create_db(self, name):
@@ -140,10 +128,11 @@ class Interface(object):
 
 
     # USE FOR db
-    def use_db(self, name):
+    def use(self, args):
         """use named database"""
         database_dir = os.path.join(sys.path[0], "databases")
 
+        name = args[0]
         # check if databse exist
         if os.path.isdir(database_dir + "/" + name):
             os.chdir(database_dir + "/" + name)
@@ -152,8 +141,15 @@ class Interface(object):
             print ("!Failed to use", name, "because it does not exist.")
 
     # SELECT for table
-    def select(self, cols ,table):
+    def select(self, args):
         """Selects columns from given table, prints output"""
+        if len(args) != 3:
+            print("Expected 4 arguments.", file=sys.stderr)
+            return 1
+        else:
+            cols = args[0].strip()
+            table = args[2].strip()
+
         table_path = os.path.join(os.getcwd(), table)
         col_indexes = []
         if not os.path.exists(table_path):
