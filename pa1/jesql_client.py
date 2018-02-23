@@ -123,8 +123,10 @@ class Interface(object):
 
         if not os.path.exists(database_dir + "/" + name):
             file = open(table, 'w') # create it
-            string = " ".join(args[1:])
-            file.write(string)
+            output_string = " ".join(args[1:])
+            output_string = output_string[1:-1]
+            output_string = output_string.replace(',', ' |')
+            file.write(output_string)
             print("Table", name, "created.")
         else:
             print("!Failed to create table", name, "because it already exists.")
