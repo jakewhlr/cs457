@@ -24,7 +24,7 @@ class Interface(object):
         encountered"""
         while True:
             try:
-                read_input = input()
+                read_input = input('jesql> ')
             except EOFError:
                 return self.__exit__ # This might need arguments xd
 
@@ -80,7 +80,7 @@ class Interface(object):
                 self.use_db(split_input[1])
 
 
-    def read_config_file(self, filename):python ignore parentheses
+    def read_config_file(self, filename):
         """Reads in a specified config file. Currently it will only
         read in settings under the DEFAULT heading. Should prolly
         fix"""
