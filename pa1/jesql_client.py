@@ -79,8 +79,16 @@ class Interface(object):
             if split_input[0].strip() == self.commands_config['UseCommand']:
                 self.use_db(split_input[1])
 
+            # SELECT
+            if split_input[0].strip() == self.commands_config['SelectCommand']:
+                if len(split_input) < 4:
+                    print("Expected 4 arguments.", file=sys.stderr) # stderr
+                    break
 
-    def read_config_file(self, filename):python ignore parentheses
+                if split_input[2] == 'FROM':
+                    self.select(split_input[1].strip(), split_input[3].strip())
+
+    def read_config_file(self, filename):
         """Reads in a specified config file. Currently it will only
         read in settings under the DEFAULT heading. Should prolly
         fix"""
@@ -93,16 +101,16 @@ class Interface(object):
 
     def create_db(self, name):
         """Creates database as directory"""
-        current_dir = os.getcwd()
-        database_dir = os.path.join(current_dir, "databases")
+        database_dir = os.path.join(sys.path[0], "databases")
 
         if not os.path.exists(database_dir): # if databases dir doesn't exist
             os.makedirs(database_dir) # create it
 
         if os.path.exists(database_dir + "/" + name):
-            print("ERROR: Database \"" + name + "\" exists.", file=sys.stderr) # stderr?
+            print("!Failed to create database", name, "because it already exists.")
         else:
             os.makedirs(database_dir + "/" + name)
+            print("Database", name, "created.")
 
     def create_table(self, name):
         """Creates table as file"""
@@ -110,42 +118,69 @@ class Interface(object):
 
     def delete_db(self, name):
         """Delete database as directory"""
-        current_dir = os.getcwd()
-        database_dir = os.path.join(current_dir, "databases")
+        database_dir = os.path.join(sys.path[0], "databases")
 
         # check if databse exist
         if os.path.exists(database_dir + "/" + name):
             # delete the entire dir & files inside
             shutil.rmtree(database_dir + "/" + name)
         else:
-            print ("!Failed to delete",name,"because it does not exist.")
+            print ("!Failed to delete", name, "because it does not exist.")
 
     def delete_table(self, name):
         """Delete database as directory"""
-        current_dir = os.getcwd()
-        database_dir = os.path.join(current_dir, "databases")
+        database_dir = os.path.join(sys.path[0], "databases")
 
         # check if table exist
         if os.path.exists(database_dir + "/" + name):
             # remove file only
             os.remove(database_dir + "/" + name)
         else:
-            print ("!Failed to delete",name,"because it does not exist.")
+            print ("!Failed to delete", name, "because it does not exist.")
 
 
     # USE FOR db
     def use_db(self, name):
         """use named database"""
-        current_dir = os.getcwd()
-        database_dir = os.path.join(current_dir, "databases")
+        database_dir = os.path.join(sys.path[0], "databases")
 
         # check if databse exist
         if os.path.isdir(database_dir + "/" + name):
             os.chdir(database_dir + "/" + name)
+            print("Using Database", name + ".")
         else:
-            print ("!Failed to delete",name,"because it does not exist.")
-
+            print ("!Failed to use", name, "because it does not exist.")
 
     # SELECT for table
+    def select(self, cols ,table):
+        """Selects columns from given table, prints output"""
+        table_path = os.path.join(os.getcwd(), table)
+        col_indexes = []
+        if not os.path.exists(table_path):
+            print ("!Failed to query table", table, "because it does not exist.")
+            return
+
+        with open(table_path) as input_file:
+            lines = input_file.readlines()
+
+        for index, line in enumerate(lines):
+            lines[index] = line.split('|')
+            for col_index, col in enumerate(lines[index]):
+                lines[index][col_index] = col.strip()
+
+        for header_index, header in enumerate(lines[0]):
+            lines[0][header_index] = header.split(' ')
+            if lines[0][header_index][0] == cols: # if col matches, note index
+                col_indexes.append(header_index)
+
+        if cols is '*': # '*' selects all columns
+            col_indexes = range(0, len(lines[0]))
+
+        for row_index, row in enumerate(lines):
+            for col in col_indexes:
+                print(*row[col], sep=" ", end='')
+                if col is not col_indexes[len(col_indexes)-1]:
+                    print(" | ", end='')
+            print('')
 
     # ALTER for update
