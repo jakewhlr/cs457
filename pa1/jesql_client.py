@@ -42,10 +42,19 @@ class Interface(object):
         self.create_options = config['CREATE_OPTS']
 
     def parse_input(self, read_input):
-        if read_input.startswith(self.default_config['CommentPrefix']):
+        if not read_input:
+            return 0
+        elif read_input.startswith(self.default_config['CommentPrefix']):
             return 0
         elif read_input == self.commands_config['ExitCommand']:
             return 255
+
+        if read_input.endswith(self.default_config['CommandSuffix']):
+            read_input = read_input[:-1]
+        else:
+            print('ERROR: command was not ended with' +
+                  self.default_config['CommandSuffix'], file=sys.stderr) # stderr
+            return 1
 
         split_input = read_input.split(' ');
 
@@ -61,7 +70,7 @@ class Interface(object):
         print('ERROR: ' + split_input[0] + ': Command not found.', file=sys.stderr)
 
     def create(self, args):
-        if len(args) != 2:
+        if len(args) < 2:
             print('ERROR: CREATE: invalid number of options specified.', file=sys.stderr) # stderr
             return 1
         elif not args[0] in self.create_options: # if command doesn't exist
@@ -69,9 +78,9 @@ class Interface(object):
             return 1
 
         if args[0].lower() == self.create_options['database'].lower(): # if option is database
-            self.create_db(args[1])
+            return self.create_db(args[1])
         elif args[0].lower() == self.create_options['table'].lower():
-            self.create_table('TODO')
+            return self.create_table(args[1:])
 
     def drop(self, args):
         if len(args) != 2:
@@ -100,9 +109,25 @@ class Interface(object):
             os.makedirs(database_dir + "/" + name)
             print("Database", name, "created.")
 
-    def create_table(self, name):
+    def create_table(self, args):
         """Creates table as file"""
+        try:
+            self.current_db
+        except:
+            print("!Failed to create table, no database selected.")
+            return 1
+        else:
+            database_dir = os.path.join(sys.path[0], "databases" + "/" + self.current_db)
+            name = args[0]
+            table = database_dir + "/" + name
 
+        if not os.path.exists(database_dir + "/" + name):
+            file = open(table, 'w') # create it
+            string = " ".join(args[1:])
+            file.write(string)
+            print("Table", name, "created.")
+        else:
+            print("!Failed to create table", name, "because it already exists.")
 
     def delete_db(self, name):
         """Delete database as directory"""
@@ -136,6 +161,7 @@ class Interface(object):
         # check if databse exist
         if os.path.isdir(database_dir + "/" + name):
             os.chdir(database_dir + "/" + name)
+            self.current_db = name
             print("Using Database", name + ".")
         else:
             print ("!Failed to use", name, "because it does not exist.")
