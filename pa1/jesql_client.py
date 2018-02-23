@@ -132,7 +132,6 @@ class Interface(object):
         else:
             print ("!Failed to delete",name,"because it does not exist.")
 
-
     # USE FOR db
     def use_db(self, name):
         """use named database"""
