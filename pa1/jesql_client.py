@@ -47,6 +47,7 @@ class Interface(object):
         elif read_input.startswith(self.default_config['CommentPrefix']):
             return 0
         elif read_input == self.commands_config['ExitCommand']:
+            print("All done.")
             return 255
 
         if read_input.endswith(self.default_config['CommandSuffix']):
@@ -228,3 +229,5 @@ class Interface(object):
 
         with open(table_path, "w") as alterFile:
             alterFile.write(converted_to_string + ' ' + '|' + ' ' + indexName + ' ' + input_type )
+
+        print("Table" + tbName+" modified.")
