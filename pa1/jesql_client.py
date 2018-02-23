@@ -139,17 +139,18 @@ class Interface(object):
         if os.path.exists(database_dir + "/" + name):
             # delete the entire dir & files inside
             shutil.rmtree(database_dir + "/" + name)
+            print('Database ' + name + ' deleted.')
         else:
             print ("!Failed to delete", name, "because it does not exist.")
 
     def delete_table(self, name):
         """Delete database as directory"""
-        database_dir = os.path.join(sys.path[0], "databases")
-
+        database_dir = os.getcwd()
         # check if table exist
         if os.path.exists(database_dir + "/" + name):
             # remove file only
             os.remove(database_dir + "/" + name)
+            print('Table', name, 'deleted.')
         else:
             print ("!Failed to delete", name, "because it does not exist.")
 
@@ -208,7 +209,10 @@ class Interface(object):
             print('')
 
     # ALTER for update
-    def alter(self, tbName, indexName, input_type):
+    def alter(self, args):
+        tbName = args[1]
+        indexName = args[3]
+        input_type = args[4]
         table_path = os.path.join(os.getcwd(), tbName)
 
         if not os.path.exists(table_path):
