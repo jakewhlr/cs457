@@ -47,6 +47,7 @@ class Interface(object):
         elif read_input.startswith(self.default_config['CommentPrefix']):
             return 0
         elif read_input == self.commands_config['ExitCommand']:
+            print("All done.")
             return 255
 
         if read_input.endswith(self.default_config['CommandSuffix']):
@@ -139,17 +140,18 @@ class Interface(object):
         if os.path.exists(database_dir + "/" + name):
             # delete the entire dir & files inside
             shutil.rmtree(database_dir + "/" + name)
+            print('Database ' + name + ' deleted.')
         else:
             print ("!Failed to delete", name, "because it does not exist.")
 
     def delete_table(self, name):
         """Delete database as directory"""
-        database_dir = os.path.join(sys.path[0], "databases")
-
+        database_dir = os.getcwd()
         # check if table exist
         if os.path.exists(database_dir + "/" + name):
             # remove file only
             os.remove(database_dir + "/" + name)
+            print('Table', name, 'deleted.')
         else:
             print ("!Failed to delete", name, "because it does not exist.")
 
@@ -208,3 +210,24 @@ class Interface(object):
             print('')
 
     # ALTER for update
+    def alter(self, args):
+        tbName = args[1]
+        indexName = args[3]
+        input_type = args[4]
+        table_path = os.path.join(os.getcwd(), tbName)
+
+        if not os.path.exists(table_path):
+            print ("!Failed to query table", tbName, "because it does not exist.")
+            return
+
+        org_file = open(table_path, 'r')
+
+        # read file into list formatt
+        read_file = org_file.read().splitlines()
+
+        converted_to_string = ''.join(read_file)
+
+        with open(table_path, "w") as alterFile:
+            alterFile.write(converted_to_string + ' ' + '|' + ' ' + indexName + ' ' + input_type )
+
+        print("Table" + tbName+" modified.")
