@@ -1,4 +1,5 @@
 pa1/changelog
+107328e,Eric,4 minutes ago,Added changelog
 
 pa1/settings.conf
 b200a65,Eric Olson,20 hours ago,Merge branch 'master' into dev-sui
@@ -8,19 +9,22 @@ ed164da,scheung3,21 hours ago,added alter command
 b874ba6,Jake Wheeler,3 days ago,Added commands config section, added invalid command error checking
 95ac2c8,Jake Wheeler,3 days ago,added empty database creation, added CREATE options to settings.conf
 66e55fc,Eric Olson,3 weeks ago,PA1 initial commit
+
 pa1/app.py
 66e55fc,Eric Olson,3 weeks ago,PA1 initial commit
-pa1/__pycache__/jesql_client.cpython-36.pyc
 
 pa1/doc/PA1_test.sql
 a7c7e64,Eric Olson,2 weeks ago,Updated assignment documents to official version
 66e55fc,Eric Olson,3 weeks ago,PA1 initial commit
+
 pa1/doc/PA1.pdf
 1968652,jakewhlr,21 hours ago,added pa1 readme, replaced PA1.docx with pdf
+
 pa1/README.md
 6dd8c8d,jakewhlr,21 hours ago,Added running instructions
+
 pa1/jesql_client.py
-b492f24,Eric,67 seconds ago,Comments comments comments
+b492f24,Eric,5 minutes ago,Comments comments comments
 91124c7,scheung3,19 hours ago,Added print statements for ALTER and EXIT
 156091d,Eric,19 hours ago,Finished cleaning up merge conflicts
 b200a65,Eric Olson,20 hours ago,Merge branch 'master' into dev-sui
@@ -44,3 +48,4 @@ b874ba6,Jake Wheeler,3 days ago,Added commands config section, added invalid com
 95ac2c8,Jake Wheeler,3 days ago,added empty database creation, added CREATE options to settings.conf
 70c8f0c,Eric,2 weeks ago,Added ctrl-d option to exit program
 66e55fc,Eric Olson,3 weeks ago,PA1 initial commit
+
