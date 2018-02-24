@@ -1,0 +1,46 @@
+pa1/changelog
+
+pa1/settings.conf
+b200a65,Eric Olson,20 hours ago,Merge branch 'master' into dev-sui
+ec15795,Eric,20 hours ago,Added baseline create table + command suffix
+ed164da,scheung3,21 hours ago,added alter command
+4f16bc0,Sui,2 days ago,Finished delte_db function
+b874ba6,Jake Wheeler,3 days ago,Added commands config section, added invalid command error checking
+95ac2c8,Jake Wheeler,3 days ago,added empty database creation, added CREATE options to settings.conf
+66e55fc,Eric Olson,3 weeks ago,PA1 initial commit
+pa1/app.py
+66e55fc,Eric Olson,3 weeks ago,PA1 initial commit
+pa1/__pycache__/jesql_client.cpython-36.pyc
+
+pa1/doc/PA1_test.sql
+a7c7e64,Eric Olson,2 weeks ago,Updated assignment documents to official version
+66e55fc,Eric Olson,3 weeks ago,PA1 initial commit
+pa1/doc/PA1.pdf
+1968652,jakewhlr,21 hours ago,added pa1 readme, replaced PA1.docx with pdf
+pa1/README.md
+6dd8c8d,jakewhlr,21 hours ago,Added running instructions
+pa1/jesql_client.py
+b492f24,Eric,67 seconds ago,Comments comments comments
+91124c7,scheung3,19 hours ago,Added print statements for ALTER and EXIT
+156091d,Eric,19 hours ago,Finished cleaning up merge conflicts
+b200a65,Eric Olson,20 hours ago,Merge branch 'master' into dev-sui
+9c6a7de,scheung3,20 hours ago,Removed unnecessary lines
+97417e3,scheung3,20 hours ago,Added ALTER functionaility
+d1562fd,Eric,20 hours ago,Finished create table function
+ec15795,Eric,20 hours ago,Added baseline create table + command suffix
+07efffe,Eric,21 hours ago,Added a separate function for parsing input
+dc9905f,Eric Olson,24 hours ago,Merge branch 'master' into dev-eric
+1156321,Jake Wheeler,24 hours ago,Updated comments for SELECT block
+ee3ef20,Jake Wheeler,24 hours ago,Corrected error messages and output
+75963da,Jake Wheeler,24 hours ago,Implemented SELECT function
+5b46975,Eric,26 hours ago,Added more noticeable prompt for use input
+0e66502,Jake Wheeler,26 hours ago,Branch test
+3fe5005,scheung3,27 hours ago,added comment for delete database
+71a6163,scheung3,27 hours ago,added comment for delete table
+ed641c9,scheung3,27 hours ago,added space
+4cac60f,scheung3,27 hours ago,added comment for deleting table and database; added Use function
+4f16bc0,Sui,2 days ago,Finished delte_db function
+b874ba6,Jake Wheeler,3 days ago,Added commands config section, added invalid command error checking
+95ac2c8,Jake Wheeler,3 days ago,added empty database creation, added CREATE options to settings.conf
+70c8f0c,Eric,2 weeks ago,Added ctrl-d option to exit program
+66e55fc,Eric Olson,3 weeks ago,PA1 initial commit
