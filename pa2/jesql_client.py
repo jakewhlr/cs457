@@ -91,9 +91,9 @@ class Interface(object):
             return 1
 
         if args[0].lower() == self.create_options['database'].lower():
-            self.delete_db(args[1])
+            self.drop_db(args[1])
         elif args[0].lower() == self.create_options['table'].lower():
-            self.delete_table(args[1])
+            self.drop_table(args[1])
 
 
     def create_db(self, name):
@@ -131,7 +131,7 @@ class Interface(object):
         else:
             print("!Failed to create table", name, "because it already exists.")
 
-    def delete_db(self, name):
+    def drop_db(self, name):
         """Delete database as directory"""
         database_dir = os.path.join(sys.path[0], "databases")
 
@@ -142,7 +142,7 @@ class Interface(object):
         else:
             print ("!Failed to delete", name, "because it does not exist.")
 
-    def delete_table(self, name):
+    def drop_table(self, name):
         """Delete database as directory"""
         database_dir = os.path.join(sys.path[0], "databases")
 
