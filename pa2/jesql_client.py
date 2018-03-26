@@ -242,7 +242,7 @@ class Interface(object):
     # INSERT INTO [table name] VALUES ();
     def insert(self, args):
 
-        database_dir = os.path.join(sys.path[0], "databases")
+        #database_dir = os.path.join(sys.path[0], "databases")
 
         word = args[0] # INTO
         #print("word : ", word) # table name
