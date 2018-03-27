@@ -292,6 +292,107 @@ class Interface(object):
     ### DELETE:
     # DELETE FROM [table name]
     # WHERE [attribute name] {condition}
+    def delete(self, args):
+
+        #database_dir = os.path.join(sys.path[0], "databases")
+
+        word = args[0] # FROM
+        #print("word : ", word) # table name
+        tbname = args[1].strip() # table name
+        table_path = os.path.join(os.getcwd(), tbname)
+        print("tbname : ", tbname) # table name
+        KeyWord_where = args[2]
+        print("KeyWord_where: ", KeyWord_where)
+
+        attrName = args[3]
+        print("attrName: ", attrName)
+
+        conditionSymbol = args[4]
+        print("conditionSymbol: ", conditionSymbol)
+
+        conditionTo = args[5]
+        print("conditionTo: ", conditionTo)
+
+        output_string = " ".join(args[3:])
+        print(" out string 1: ",output_string)
+
+        if conditionSymbol == '=':
+            conditionSymbol = '=='
+
+        print ("conditionSymbol: ",conditionSymbol)
+
+        f = open(table_path,'r')
+        # read from memory
+        s = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
+
+        # read to list
+        lines =  f.readlines()
+
+        # close file
+        f.close()
+
+        # check if conditionTo exit in file
+        if s.find(conditionTo) != -1:
+            print('true')
+        else:
+        	print('not found')
+
+        removeline = open(table_path,'w')
+        for line in tablefile:
+            if conditionSymbol == '=':
+                if condition not in line:
+                    removeline.write(line)
+
+            #if conditionSymbol == '>':
+            #    if attrName not in line:
+
+            #if conditionSymbol == '<':
+
+            else:
+                print("deleted line:", line)
+        removeline.close()
+        """
+
+        substring_values = "VALUES"
+        #print("name 2: ", string_values)
+
+        # check word: into
+        if word == "INTO":
+            # check if table exist
+            if os.path.exists(table_path):
+                # check word: values
+                if string_values.find(substring_values) is not -1:
+                    output_string = " ".join(args[2:])
+        #            print(" out string 1: ",output_string)
+
+                    output_string = output_string.replace('VALUES(', '')
+        #            print(" out string test: ",output_string)
+
+                    output_string = output_string.replace("'", '')
+        #            print(" out string test0: ",output_string)
+
+                    output_string = output_string.replace(')', '')
+        #            print(" out string test2: ",output_string)
+
+                    output_string = output_string.replace(',', '|')
+        #            print(" out string end: ",output_string)
+
+                    # append to file
+                    with open(tbname, "a") as tableFile:
+                        tableFile.write(output_string + "\n")
+
+                else:
+                    # !! produce error
+                    print("Python did NOT find the substring!")
+
+            else:
+                print ("!Failed to insert", tbname, "because it does not exist.")
+
+        else:
+            print ("!Failed to insert because",word, "does not exist.")"""
+
+
+
 
     ### MODIFY:
     # UPDATE [table name]
