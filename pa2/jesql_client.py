@@ -4,6 +4,7 @@ import configparser
 import os
 import sys
 import shutil
+import operator
 
 class Interface(object):
     """Class docstring"""
@@ -171,12 +172,42 @@ class Interface(object):
     # SELECT for table
     def select(self, args):
         """Selects columns from given table, prints output"""
-        if len(args) != 3:
-            print("Expected 4 arguments.", file=sys.stderr)
-            return 1
-        else:
-            cols = args[0].strip()
-            table = args[2].strip()
+        newargs = [] # for args conversion
+        list_arg = [] # for args sublist conversion
+        for index, arg in enumerate(args): # generate new list of args with subsets
+            if arg.endswith(',') or list_arg and list_arg[-1].endswith(','): # if comma, start a sublist
+                list_arg.append(arg)
+                if list_arg and not list_arg[-1].endswith(','): # if done with sublist
+                    for index, element in enumerate(list_arg): # strip commas from list
+                        list_arg[index] = element.split(',')[0]
+                    newargs.append(list_arg)
+                    list_arg = [] # reset temp arg list
+            else:
+                newargs.append(arg.strip())
+
+        # !!! Rewrite with dynamic arg indexes
+        cols = newargs[0]
+        table = newargs[2].strip()
+        subquery = False
+        if len(newargs) > 3:
+            test_attr = newargs[4].strip()
+            conditional = newargs[5].strip()
+            test_value = newargs[6].strip()
+        # !!!
+            subquery = True
+            # !!! Put in config file?
+            opers = { "<": operator.lt, # dict of valid comparison operators
+                      "<=": operator.le,
+                      "=": operator.eq,
+                      "!=": operator.ne,
+                      ">": operator.gt,
+                      ">=": operator.ge,
+                  }
+            data_types = { "int": int, # dict of valid types and their respective cast functions
+                           "float": float,
+                           "varchar": str,
+                  }
+            # !!!
 
         table_path = os.path.join(os.getcwd(), table)
         col_indexes = []
@@ -194,26 +225,38 @@ class Interface(object):
 
         for header_index, header in enumerate(lines[0]):
             lines[0][header_index] = header.split(' ')
-            if lines[0][header_index][0] == cols: # if col matches, note index
+            if lines[0][header_index][0] in cols: # if col matches, note index
                 col_indexes.append(header_index)
+            if subquery and lines[0][header_index][0] == test_attr:
+                test_index = header_index
+                test_type = data_types[lines[0][header_index][1].split("(")[0].strip()]
 
         if cols is '*': # '*' selects all columns
             col_indexes = range(0, len(lines[0]))
 
         for row_index, row in enumerate(lines):
-            for col in col_indexes:
-                print(*row[col], sep=" ", end='')
-                if col is not col_indexes[len(col_indexes)-1]:
-                    print(" | ", end='')
-            print('')
-
-
-        # PA 2
-
-
-
-
-        # PA 2 END
+            if row_index is 0:
+                for col in col_indexes:
+                    print(*row[col], sep=" ", end='')
+                    if col is not col_indexes[len(col_indexes)-1]:
+                        print(" | ", end='')
+                print('')
+            else:
+                if subquery:
+                    if opers[conditional](test_type(row[test_index]), test_type(test_value)):
+                        for col in col_indexes:
+                            print(*row[col], sep="", end='')
+                            if col is not col_indexes[len(col_indexes)-1]:
+                                print(" | ", end='')
+                            else:
+                                print('')
+                else:
+                    for col in col_indexes:
+                        print(*row[col], sep="", end='')
+                        if col is not col_indexes[len(col_indexes)-1]:
+                            print(" | ", end='')
+                        else:
+                            print('')
 
     # ALTER for update
     def alter(self, tbName, indexName, input_type):
