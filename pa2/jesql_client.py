@@ -4,6 +4,8 @@ import configparser
 import os
 import sys
 import shutil
+import mmap
+import operator
 
 class Interface(object):
     """Class docstring"""
@@ -294,105 +296,93 @@ class Interface(object):
     # WHERE [attribute name] {condition}
     def delete(self, args):
 
-        #database_dir = os.path.join(sys.path[0], "databases")
-
         word = args[0] # FROM
         #print("word : ", word) # table name
         tbname = args[1].strip() # table name
         table_path = os.path.join(os.getcwd(), tbname)
-        print("tbname : ", tbname) # table name
+        #print("tbname : ", tbname) # table name
         KeyWord_where = args[2]
-        print("KeyWord_where: ", KeyWord_where)
+        #print("KeyWord_where: ", KeyWord_where)
 
-        attrName = args[3]
-        print("attrName: ", attrName)
+        attrName = args[3].strip()
+        #print("attrName: ", attrName)
 
         conditionSymbol = args[4]
-        print("conditionSymbol: ", conditionSymbol)
+        #print("conditionSymbol: ", conditionSymbol)
 
-        conditionTo = args[5]
-        print("conditionTo: ", conditionTo)
+        conditionTo = args[5].strip()
+        #print("conditionTo: ", conditionTo)
 
         output_string = " ".join(args[3:])
-        print(" out string 1: ",output_string)
+        #print(" out string 1: ",output_string)
 
-        if conditionSymbol == '=':
-            conditionSymbol = '=='
+        #print ("conditionSymbol: ",conditionSymbol)
 
-        print ("conditionSymbol: ",conditionSymbol)
+        opers = { "<": operator.lt, # dict of valid comparison operators
+                      "<=": operator.le,
+                      "=": operator.eq,
+                      "!=": operator.ne,
+                      ">": operator.gt,
+                      ">=": operator.ge,
+                  }
+        data_types = { "int": int, # dict of valid types and their respective cast functions
+                           "float": float,
+                           "varchar": str,
+                  }
 
         f = open(table_path,'r')
         # read from memory
         s = mmap.mmap(f.fileno(), 0, access=mmap.ACCESS_READ)
 
         # read to list
-        lines =  f.readlines()
+        tablefile =  f.readlines()
 
         # close file
         f.close()
+        #print("tableFile[0]: ",tablefile[0])
 
-        # check if conditionTo exit in file
+        # split by | into list formatt
+        headerline = tablefile[0].split("|")
+
+        # find col index and variable casting
+        for index, element in enumerate(headerline):
+            headerline[index] = headerline[index].strip()
+            #print("headerline[index]: sdfads",headerline[index])
+            print(attrName.strip(), " == ", headerline[index].split(" ")[0].strip())
+            if attrName.strip() == headerline[index].split(" ")[0].strip():
+#               # store index
+                comparisonIndex = index
+                # store type
+                comparisonType = headerline[index].split(" ")[1].split("(")[0].strip()
+                # casting type
+                comparisonTypeCast = data_types[comparisonType]
+
+
+        #print("headerline: ",headerline,"\n")
+
+        """# check if conditionTo exit in file
         if s.find(conditionTo) != -1:
             print('true')
         else:
-        	print('not found')
+        	print('not found')"""
+
+        #condition = conditionTo.replace("'", '')
+
 
         removeline = open(table_path,'w')
         for line in tablefile:
-            if conditionSymbol == '=':
-                if condition not in line:
-                    removeline.write(line)
+            # split line to list form w/ specific index and cast to correct type
+            srcCompare = comparisonTypeCast(line.split("|")[comparisonIndex]).strip()
+            dstCompare = comparisonTypeCast(conditionTo).strip()
+            print(srcCompare,"==",dstCompare, "cc ",conditionSymbol.strip())
+            print(operator.eq(srcCompare,dstCompare))
+            print("opers[conditionSymbol.strip()] --> ",opers[conditionSymbol.strip()])
 
-            #if conditionSymbol == '>':
-            #    if attrName not in line:
-
-            #if conditionSymbol == '<':
-
+            if not opers[conditionSymbol.strip()](srcCompare,dstCompare):
+                removeline.write(line)
             else:
                 print("deleted line:", line)
         removeline.close()
-        """
-
-        substring_values = "VALUES"
-        #print("name 2: ", string_values)
-
-        # check word: into
-        if word == "INTO":
-            # check if table exist
-            if os.path.exists(table_path):
-                # check word: values
-                if string_values.find(substring_values) is not -1:
-                    output_string = " ".join(args[2:])
-        #            print(" out string 1: ",output_string)
-
-                    output_string = output_string.replace('VALUES(', '')
-        #            print(" out string test: ",output_string)
-
-                    output_string = output_string.replace("'", '')
-        #            print(" out string test0: ",output_string)
-
-                    output_string = output_string.replace(')', '')
-        #            print(" out string test2: ",output_string)
-
-                    output_string = output_string.replace(',', '|')
-        #            print(" out string end: ",output_string)
-
-                    # append to file
-                    with open(tbname, "a") as tableFile:
-                        tableFile.write(output_string + "\n")
-
-                else:
-                    # !! produce error
-                    print("Python did NOT find the substring!")
-
-            else:
-                print ("!Failed to insert", tbname, "because it does not exist.")
-
-        else:
-            print ("!Failed to insert because",word, "does not exist.")"""
-
-
-
 
     ### MODIFY:
     # UPDATE [table name]
