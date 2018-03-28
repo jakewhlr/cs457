@@ -6,7 +6,7 @@ USE CS457_PA2;
 CREATE TABLE Product (pid int, name varchar(20), price float);
 
 --Insert new data (20 points)
-insert INTO Product VALUES(1,	'Gizmo',      	19.99);
+insert into Product values(1,	'Gizmo',      	19.99);
 insert into Product values(2,	'PowerGizmo', 	29.99);
 insert into Product values(3,	'SingleTouch', 	149.99);
 insert into Product values(4,	'MultiTouch', 	199.99);
@@ -15,28 +15,28 @@ insert into Product values(5,	'SuperGizmo', 	49.99);
 select * from Product;
 
 --Modify data (20 points)
-update Product
-set name = 'Gizmo'
+update Product 
+set name = 'Gizmo' 
 where name = 'SuperGizmo';
 
-update Product
-set price = 14.99
+update Product 
+set price = 14.99 
 where name = 'Gizmo';
 
 select * from Product;
 
 --Delete data (20 points)
-delete from product
+delete from product 
 where name = 'Gizmo';
 
-delete from product
+delete from product 
 where price > 150;
 
 select * from Product;
 
 --Query subsets (10 points)
-select name, price
-from product
+select name, price 
+from product 
 where pid != 2;
 
 .exit
