@@ -1,17 +1,14 @@
 """This module handles all of the user interaction functionality
 """
 import configparser
-import os
 import sys
-import shutil
-import operator
 import tokenizer
 import jesql_parser
-import mmap
 
 class Interface(object):
     """Class docstring"""
-    def __init__(self, config_file=None):
+    def __init__(self, args, config_file=None):
+        self.args = args
         if not config_file:
             config_file = 'settings.conf'
 
@@ -28,7 +25,10 @@ class Interface(object):
         encountered"""
         while True:
             try:
-                read_input = input('jesql> ')
+                if self.args.silent:
+                    read_input = input()
+                else:
+                    read_input = input('jesql> ')
             except EOFError:
                 return self.__exit__ # This might need arguments xd
 
@@ -60,16 +60,3 @@ class Interface(object):
 
         tokens = tokenizer.tokenize(read_input)
         jesql_parser.parse(tokens)
-
-        # split_input = read_input.split(' ');
-
-        # for (key, value) in self.commands_config.items():
-        #     if split_input[0].lower() == value.lower():
-        #         try:
-        #             return getattr(self, value.lower())(split_input[1:])
-        #         except AttributeError:
-        #             print('ERROR: ' + split_input[0] + ' was included but not defined',
-        #                   file=sys.stderr)
-        #             raise
-
-        # print('ERROR: ' + split_input[0] + ': Command not found.', file=sys.stderr)
