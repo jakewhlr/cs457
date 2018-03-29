@@ -2,6 +2,7 @@
 import os
 import sys
 import shutil
+import re
 import operator
 
 def create():
@@ -147,7 +148,7 @@ def select(args):
             print('')
         else:
             if subquery:
-                if opers[conditional](test_type(row[test_index]), test_type(test_value)):
+                if opers[conditional](test_type(re.sub('\'|\"', '', row[test_index])), test_type(re.sub('\'|\"', '', test_value))):
                     for col in col_indexes:
                         print(*row[col], sep="", end='')
                         if col is not col_indexes[len(col_indexes)-1]:
