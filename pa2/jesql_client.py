@@ -7,6 +7,7 @@ import shutil
 import operator
 import tokenizer
 import jesql_parser
+import mmap
 
 class Interface(object):
     """Class docstring"""
