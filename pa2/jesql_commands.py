@@ -206,3 +206,40 @@ def insert(tbname, values):
 # WHERE [attribute Name] = [attribute value]
 
 ### QUERY @ SELECT ***
+
+class Reader(object):
+    def __init__(self, filename, delimiter='|'):
+        self.filename = filename
+        self.delimiter = delimiter
+        self.columns = []
+        self.file = open(self.filename, 'r')
+        self.line_num = 0
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self):
+        if self.file:
+            self.file.close()
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        line = self.file.readline()
+        if not line:
+            raise StopIteration
+
+        row = {}
+        for index, row_vals in enumerate(line.split(self.delimiter)):
+            row_vals = row_vals.strip()
+            row[self.columns[index]['name']] = row_vals
+
+        return row
+
+    def read_header(self):
+        header = self.file.readline()
+        for column in header.split(self.delimiter):
+            column = column.strip()
+            column_vals = column.split(' ')
+            self.columns.append({'name': column_vals[0], 'type': column_vals[1]})
