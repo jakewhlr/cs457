@@ -76,6 +76,18 @@ def parse_insert(tokens):
     else:
         print('ERROR: near "' + tokens[0] + '": syntax error', file=sys.stderr)
 
+def parse_delete(tokens):
+    try:
+        if tokens[0].lower() == 'from':
+            if tokens[2].lower() == 'where':
+                jesql_commands.delete(tokens[1], tokens[4], tokens[3], tokens[5])
+            else:
+                print('ERROR: near "' + tokens[2] + '": syntax error', file=sys.stderr)
+        else:
+            print('ERROR: near "' + tokens[0] + '": syntax error', file=sys.stderr)
+    except IndexError as e:
+        print('ERROR: expected arguments missing')
+
 def parse_update(tokens):
     try:
         if tokens[1].lower() == 'set':

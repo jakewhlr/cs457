@@ -2,6 +2,7 @@
 import os
 import sys
 import shutil
+import operator
 
 def create():
     pass
@@ -199,10 +200,28 @@ def insert(tbname, values):
 ### DELETE:
 # DELETE FROM [table name]
 # WHERE [attribute name] {condition}
+def delete(tbname, conditional, where_attr, where_val):
+    if 'databases' not in os.getcwd():
+        print("!Failed to read table, no database selected.")
+        return 1
 
-# update Product
-# set name = 'Gizmo'
-# where name = 'SuperGizmo';
+    opers = { "<": operator.lt, # dict of valid comparison operators
+              "<=": operator.le,
+              "=": operator.eq,
+              "!=": operator.ne,
+              ">": operator.gt,
+              ">=": operator.ge,
+            }
+
+    table_path = os.path.join(os.getcwd(), tbname)
+    jesql_reader = Reader(table_path)
+    jesql_reader.read_header()
+
+    for index, row in jesql_reader:
+        if opers[conditional](row[where_attr], str(where_val)):
+            jesql_reader.delete_row(index)
+    jesql_reader.write_file()
+
 def update(tbname, set_attr, set_val, where_attr, where_val):
     if 'databases' not in os.getcwd():
         print("!Failed to read table, no database selected.")
@@ -218,7 +237,6 @@ def update(tbname, set_attr, set_val, where_attr, where_val):
             jesql_reader.update_row(index, row)
     jesql_reader.write_file()
 
-### QUERY @ SELECT ***
 
 class Reader(object):
     def __init__(self, filename, delimiter='|'):
@@ -241,7 +259,7 @@ class Reader(object):
         return self
 
     def __next__(self):
-        if self.line_num == len(self.rows):
+        if self.line_num >= len(self.rows):
             raise StopIteration
         else:
             line = self.rows[self.line_num]
@@ -259,6 +277,7 @@ class Reader(object):
             column = column.strip()
             column_vals = column.split(' ')
             self.columns.append({'name': column_vals[0], 'type': column_vals[1]})
+        self.line_num += 1
 
     def read_file(self):
         with open(self.filename, 'r') as file:
@@ -271,6 +290,9 @@ class Reader(object):
         raw_row = raw_row[:-2]
         raw_row += '\n'
         self.rows[index] = raw_row
+
+    def delete_row(self, index):
+        del self.rows[index]
 
     def write_file(self):
         with open(self.filename, 'w') as file:
