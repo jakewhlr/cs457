@@ -3,6 +3,7 @@ import os
 import sys
 import shutil
 import re
+import operator
 
 def create():
     pass
@@ -200,10 +201,100 @@ def insert(tbname, values):
 ### DELETE:
 # DELETE FROM [table name]
 # WHERE [attribute name] {condition}
+def delete(tbname, conditional, where_attr, where_val):
+    if 'databases' not in os.getcwd():
+        print("!Failed to read table, no database selected.")
+        return 1
 
-### MODIFY:
-# UPDATE [table name]
-# SET [attribute Name] = [value]
-# WHERE [attribute Name] = [attribute value]
+    opers = { "<": operator.lt, # dict of valid comparison operators
+              "<=": operator.le,
+              "=": operator.eq,
+              "!=": operator.ne,
+              ">": operator.gt,
+              ">=": operator.ge,
+            }
 
-### QUERY @ SELECT ***
+    table_path = os.path.join(os.getcwd(), tbname)
+    jesql_reader = Reader(table_path)
+    jesql_reader.read_header()
+
+    for index, row in jesql_reader:
+        if opers[conditional](row[where_attr], str(where_val)):
+            jesql_reader.delete_row(index)
+    jesql_reader.write_file()
+
+def update(tbname, set_attr, set_val, where_attr, where_val):
+    if 'databases' not in os.getcwd():
+        print("!Failed to read table, no database selected.")
+        return 1
+
+    table_path = os.path.join(os.getcwd(), tbname)
+    jesql_reader = Reader(table_path)
+    jesql_reader.read_header()
+
+    for index, row in jesql_reader:
+        if row[where_attr] == where_val:
+            row[set_attr] = set_val
+            jesql_reader.update_row(index, row)
+    jesql_reader.write_file()
+
+
+class Reader(object):
+    def __init__(self, filename, delimiter='|'):
+        self.filename = filename
+        self.delimiter = delimiter
+        self.columns = []
+        self.rows = []
+        self.line_num = 0
+
+        self.read_file()
+
+    def __enter__(self):
+        pass
+
+    def __exit__(self):
+        if self.file:
+            self.file.close()
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        if self.line_num >= len(self.rows):
+            raise StopIteration
+        else:
+            line = self.rows[self.line_num]
+            row = {}
+            for index, row_vals in enumerate(line.split(self.delimiter)):
+                row_vals = row_vals.strip()
+                row[self.columns[index]['name']] = row_vals
+
+            self.line_num += 1
+            return self.line_num - 1, row
+
+    def read_header(self):
+        header = self.rows[0]
+        for column in header.split(self.delimiter):
+            column = column.strip()
+            column_vals = column.split(' ')
+            self.columns.append({'name': column_vals[0], 'type': column_vals[1]})
+        self.line_num += 1
+
+    def read_file(self):
+        with open(self.filename, 'r') as file:
+            self.rows = file.readlines()
+
+    def update_row(self, index, row):
+        raw_row = ''
+        for key, value in row.items():
+            raw_row += value + ' | '
+        raw_row = raw_row[:-2]
+        raw_row += '\n'
+        self.rows[index] = raw_row
+
+    def delete_row(self, index):
+        del self.rows[index]
+
+    def write_file(self):
+        with open(self.filename, 'w') as file:
+            file.writelines(self.rows)
