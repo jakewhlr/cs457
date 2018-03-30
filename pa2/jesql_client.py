@@ -4,6 +4,7 @@ import configparser
 import sys
 import tokenizer
 import jesql_parser
+import re
 
 class Interface(object):
     """Class docstring"""
@@ -23,17 +24,26 @@ class Interface(object):
     def accept_user_input(self):
         """Begins accepting user input until the ExitCommand is
         encountered"""
-        while True:
-            try:
-                if self.args.silent:
-                    read_input = input()
-                else:
-                    read_input = input('jesql> ')
-            except EOFError:
-                return self.__exit__ # This might need arguments xd
+        read_input = ''
+        while read_input.strip().lower() != self.commands_config['ExitCommand'].lower():
+            if not self.args.silent:
+                print('jesql> ', end='')
+                sys.stdout.flush()
 
-            if self.parse_input(read_input.strip()) == 255:
+            read_input += ' ' + sys.stdin.readline()
+
+            if read_input.strip().startswith(self.default_config['CommentPrefix']):
+                read_input = ''
+            elif read_input.strip().endswith(';'):
+                read_input = ''.join(read_input.splitlines()).strip()
+                tokens = tokenizer.tokenize(read_input[:-1])
+                jesql_parser.parse(tokens)
+                read_input = ''
+            elif not read_input.strip(' '):
                 return self.__exit__
+            elif read_input == ' \n': # just pressing enter returns <space><newline>
+                read_input = ''
+
 
     def read_config_file(self, filename):
         """Reads in a specified config file."""
@@ -42,21 +52,3 @@ class Interface(object):
         self.default_config = config['DEFAULT']
         self.commands_config = config['COMMANDS']
         self.create_options = config['CREATE_OPTS']
-
-    def parse_input(self, read_input):
-        if not read_input:
-            return 0
-        elif read_input.startswith(self.default_config['CommentPrefix']):
-            return 0
-        elif read_input == self.commands_config['ExitCommand']:
-            return 255
-
-        if read_input.endswith(self.default_config['CommandSuffix']):
-            read_input = read_input[:-1]
-        else:
-            print('ERROR: command was not ended with' +
-                  self.default_config['CommandSuffix'], file=sys.stderr) # stderr
-            return 1
-
-        tokens = tokenizer.tokenize(read_input)
-        jesql_parser.parse(tokens)
