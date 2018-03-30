@@ -1,9 +1,9 @@
 # CS457 Database Management Systems
-## Programming Assignment 1: Metadata Management
+## Programming Assignment 2: Basic Data Manipulation
 #### Sui Cheung, Eric Olson, Jake Wheeler
 
 ## Assignment Overview
-"In this assignment you will write a program that allows a database user to manage the metadata of their relational data. By metadata, we mean the database’s own information (e.g., database’s name, creation time, owner) as well  as the properties of the tables (e.g., table’s names, attributes, constraints program."
+"In this assignment you will write a program that allows a database user to insert, delete, modify, and query their data on basic tables (i.e., no table joins). It is assumed that the database and table structures (i.e., their metadata) are ready, which should have been completed in the frst assignment."
 
 ## Implementation
 This database metadata management application is implemented using Python 3, and allows for the creation, deletion, and altering of databases and tables. Databases are created as subdirectories within the `databases` directory in the root of the repository. Within those directories, tables are created with the format:
@@ -20,7 +20,10 @@ The following commands can be used:
 CREATE DATABASE <database name>;
 CREATE TABLE <table name>(<attributes>);
 USE <database name>;
+INSERT into <table name> values(<values>);
+UPDATE <table name> SET <attribute> = <value> WHERE <attribute> = <value>;
 SELECT <attribute, *> FROM <table name>;
+DELETE from <table name> WHERE <attribute> = <value>;
 DROP DATABASE <database name>;
 DROP TABLE <table name>;
 ALTER <table name> ADD <attribute_name> <attribute_type>;
@@ -30,56 +33,79 @@ ALTER <table name> ADD <attribute_name> <attribute_type>;
 
 ### Sample Input
 ```
---Database metadata (20 points)
-CREATE DATABASE db_1;
-CREATE DATABASE db_1;
-CREATE DATABASE db_2;
-DROP DATABASE db_2;
-DROP DATABASE db_2;
-CREATE DATABASE db_2;
+CREATE DATABASE CS457_PA2;
+USE CS457_PA2;
+CREATE TABLE Product (pid int, name varchar(20), price float);
 
---Table metadata (50 points)
-USE db_1;
-CREATE TABLE tbl_1 (a1 int, a2 varchar(20));
-CREATE TABLE tbl_1 (a3 float, a4 char(20));
-DROP TABLE tbl_1;
-DROP TABLE tbl_1;
-CREATE TABLE tbl_1 (a1 int, a2 varchar(20));
-SELECT * FROM tbl_1;
-ALTER TABLE tbl_1 ADD a3 float;
-SELECT * FROM tbl_1;
-CREATE TABLE tbl_2 (a3 float, a4 char(20));
-SELECT * FROM tbl_2;
-USE db_2;
-SELECT * FROM tbl_1;
-CREATE TABLE tbl_1 (a3 float, a4 char(20));
-SELECT * FROM tbl_1;
+--Insert new data (20 points)
+insert into Product values(1,	'Gizmo',      	19.99);
+insert into Product values(2,	'PowerGizmo', 	29.99);
+insert into Product values(3,	'SingleTouch', 	149.99);
+insert into Product values(4,	'MultiTouch', 	199.99);
+insert into Product values(5,	'SuperGizmo', 	49.99);
 
-.EXIT
+select * from Product;
+
+--Modify data (20 points)
+update Product
+set name = 'Gizmo'
+where name = 'SuperGizmo';
+
+update Product
+set price = 14.99
+where name = 'Gizmo';
+
+select * from Product;
+
+--Delete data (20 points)
+delete from product
+where name = 'Gizmo';
+
+delete from product
+where price > 150;
+
+select * from Product;
+
+--Query subsets (10 points)
+select name, price
+from product
+where pid != 2;
+
+.exit
 ```
 
 ### Expected output
 ```
--- Database db_1 created.
--- !Failed to create database db_1 because it already exists.
--- Database db_2 created.
--- Database db_2 deleted.
--- !Failed to delete db_2 because it does not exist.
--- Database db_2 created.
--- Using database db_1.
--- Table tbl_1 created.
--- !Failed to create table tbl_1 because it already exists.
--- Table tbl_1 deleted.
--- !Failed to delete tbl_1 because it does not exist.
--- Table tbl_1 created.
--- a1 int | a2 varchar(20)
--- Table tbl_1 modified.
--- a1 int | a2 varchar(20) | a3 float
--- Table tbl_2 created.
--- a3 float | a4 char(20)
--- Using Database db_2.
--- !Failed to query table tbl_1 because it does not exist.
--- Table tbl_1 created.
--- a3 float | a4 char(20)
+-- Expected output
+--
+-- Database CS457_PA2 created.
+-- Using database CS457_PA2.
+-- Table Product created.
+-- 1 new record inserted.
+-- 1 new record inserted.
+-- 1 new record inserted.
+-- 1 new record inserted.
+-- 1 new record inserted.
+-- pid int|name varchar(20)|price float
+-- 1|Gizmo|19.99
+-- 2|PowerGizmo|29.99
+-- 3|SingleTouch|149.99
+-- 4|MultiTouch|199.99
+-- 5|SuperGizmo|49.99
+-- 1 record modified.
+-- 2 records modified.
+-- pid int|name varchar(20)|price float
+-- 1|Gizmo|14.99
+-- 2|PowerGizmo|29.99
+-- 3|SingleTouch|149.99
+-- 4|MultiTouch|199.99
+-- 5|Gizmo|14.99
+-- 2 records deleted.
+-- 1 record deleted.
+-- pid int|name varchar(20)|price float
+-- 2|PowerGizmo|29.99
+-- 3|SingleTouch|149.99
+-- name varchar(20)|price float
+-- SingleTouch|149.99
 -- All done.
 ```
