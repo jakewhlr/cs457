@@ -92,7 +92,7 @@ def select(args):
 
     # !!! Rewrite with dynamic arg indexes
     cols = newargs[0]
-    table = newargs[2].strip()
+    table = newargs[2].strip().lower()
     subquery = False
     if len(newargs) > 3:
         test_attr = newargs[4].strip()
@@ -195,6 +195,7 @@ def insert(tbname, values):
                     table_file.write(' | ')
                 else:
                     table_file.write('\n')
+        print('1 new record inserted.')
     else:
     	print ("!Failed to insert", tbname, "because it does not exist.")
 
@@ -214,30 +215,65 @@ def delete(tbname, conditional, where_attr, where_val):
               ">=": operator.ge,
             }
 
+    data_types = { "int": int,
+                   "float": float,
+                   "varchar": str,
+                 }
+
+    records_deleted = 0
     table_path = os.path.join(os.getcwd(), tbname)
     jesql_reader = Reader(table_path)
-    jesql_reader.read_header()
+    header = jesql_reader.read_header()
+    for header_col in header:
+        if header_col['name'] == where_attr:
+            var_type = data_types[header_col['type']]
 
     for index, row in jesql_reader:
-        if opers[conditional](row[where_attr], str(where_val)):
+        if opers[conditional](var_type(row[where_attr]), var_type(where_val)):
             jesql_reader.delete_row(index)
+            records_deleted += 1
     jesql_reader.write_file()
 
-def update(tbname, set_attr, set_val, where_attr, where_val):
+    print(records_deleted, 'records deleted')
+
+def update(tbname, conditional, set_attr, set_val, where_attr, where_val):
     if 'databases' not in os.getcwd():
         print("!Failed to read table, no database selected.")
         return 1
 
-    table_path = os.path.join(os.getcwd(), tbname)
-    jesql_reader = Reader(table_path)
-    jesql_reader.read_header()
+    opers = { "<": operator.lt, # dict of valid comparison operators
+              "<=": operator.le,
+              "=": operator.eq,
+              "!=": operator.ne,
+              ">": operator.gt,
+              ">=": operator.ge,
+            }
 
-    for index, row in jesql_reader:
-        if row[where_attr] == where_val:
-            row[set_attr] = set_val
-            jesql_reader.update_row(index, row)
-    jesql_reader.write_file()
+    data_types = { "int": int,
+                   "float": float,
+                   "varchar": str,
+                 }
 
+
+    try:
+        table_path = os.path.join(os.getcwd(), tbname)
+        jesql_reader = Reader(table_path)
+        header = jesql_reader.read_header()
+
+        for header_col in header:
+            if header_col['name'] == where_attr:
+                var_type = data_types[header_col['type']]
+
+        records_updated = 0
+        for index, row in jesql_reader:
+            if opers[conditional](var_type(row[where_attr]), var_type(where_val)):
+                row[set_attr] = set_val
+                jesql_reader.update_row(index, row)
+                records_updated += 1
+        jesql_reader.write_file()
+        print(records_updated, 'records modified.')
+    except FileNotFoundError:
+        print('ERROR: Invalid table name')
 
 class Reader(object):
     def __init__(self, filename, delimiter='|'):
@@ -279,6 +315,8 @@ class Reader(object):
             column_vals = column.split(' ')
             self.columns.append({'name': column_vals[0], 'type': column_vals[1]})
         self.line_num += 1
+
+        return self.columns
 
     def read_file(self):
         with open(self.filename, 'r') as file:
