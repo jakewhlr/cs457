@@ -162,14 +162,32 @@ def select(args):
             if output_dict:
                 output_dict_list.append(output_dict)
                 output_dict = {}
-    else: # JOIN TODO
+    else: # default JOIN 
         table_selects = {}
         for index, table in enumerate(tables):
             table_args = []
             table_args.append(cols)
             table_args.append(['from', [table[0]]])
             table_selects[table[1]] = select(table_args)
+        left_split = left_test.split('.')
+        left_test_name = left_split[0]
+        left_test_var = left_split[1]
 
+        right_split = right_test.split('.')
+        right_test_name = right_split[0]
+        right_test_var = right_split[1]
+
+        conditional_function = opers[conditional]
+        output_dict_list.append(table_selects[left_test_name][0] + table_selects[right_test_name][0])
+        for right_index, right_item in enumerate(table_selects[right_test_name]):
+            if right_index is 0:
+                continue
+            for left_index, left_item in enumerate(table_selects[left_test_name]):
+                if left_index is 0:
+                    continue
+                if conditional_function(left_item[left_test_var], right_item[right_test_var]):
+                    output_dict = {**left_item, **right_item}
+            output_dict_list.append(output_dict)
     return output_dict_list
 
 def alter(tbName, indexName, input_type):
