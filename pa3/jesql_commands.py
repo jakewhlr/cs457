@@ -86,6 +86,10 @@ def select(args):
     subquery = False # Bool to determine if where is used
     output_lines = []
     output_line = ''
+    output_dict = {}
+    output_dict_list = []
+    col_header_list = []
+    header_list = []
 
     opers = { "<": operator.lt, # dict of valid comparison operators
               "<=": operator.le,
@@ -127,6 +131,7 @@ def select(args):
                 lines[index][col_index] = col.strip()
 
         for header_index, header in enumerate(lines[0]):
+            col_header_list.append(header.split(' ', 1))
             lines[0][header_index] = header.split(' ')
             if lines[0][header_index][0] in cols: # if col matches, note index
                 col_indexes.append(header_index)
@@ -134,45 +139,56 @@ def select(args):
                 test_index = header_index
                 test_type = data_types[lines[0][header_index][1].split("(")[0].strip()]
 
+        for outer_index, outer_item in enumerate(col_header_list):
+            for inner_index, inner_item in enumerate(outer_item):
+                col_header_list[outer_index][inner_index] = re.sub(' ', '', inner_item)
+        output_dict_list.append(col_header_list)
+        col_header_list = []
+
         if '*' in cols: # '*' selects all columns
             col_indexes = range(0, len(lines[0]))
 
         for row_index, row in enumerate(lines):
             if row_index is 0:
-                for col in col_indexes:
-                    # print(*row[col], sep=" ", end='')
-                    output_line = output_line + " ".join(row[col])
-                    if col is not col_indexes[len(col_indexes)-1]:
-                        # print(" | ", end='')
-                        output_line = output_line + " | "
-                # print('')
-                output_lines.append(output_line)
-                output_line = ''
-            else:
-                if subquery:
-                    if opers[conditional](test_type(re.sub('\'|\"', '', row[test_index])), test_type(re.sub('\'|\"', '', right_test))):
-                        for col in col_indexes:
-                            # print(*row[col], sep="", end='')
-                            output_line = output_line + "".join(row[col])
-                            if col is not col_indexes[len(col_indexes)-1]:
-                                # print(" | ", end='')
-                                output_line = output_line + " | "
-                            else:
-                                # print('')
-                                output_lines.append(output_line)
-                                output_line = ''
-                else:
+                continue
+            if subquery:
+                if opers[conditional](test_type(re.sub('\'|\"', '', row[test_index])), test_type(re.sub('\'|\"', '', right_test))):
                     for col in col_indexes:
-                        # print(*row[col], sep="", end='')
-                        output_line = output_line + "".join(row[col])
-                        if col is not col_indexes[len(col_indexes)-1]:
-                            # print(" | ", end='')
-                            output_line = output_line + " | "
-                        else:
-                            # print('')
-                            output_lines.append(output_line)
-                            output_line = ''
-    return output_lines
+                        output_dict[output_dict_list[0][col][0]] = re.sub('\'|\"', '', row[col])
+            else:
+                for col in col_indexes:
+                    output_dict[output_dict_list[0][col][0]] = re.sub('\'|\"', '', row[col])
+
+            if output_dict:
+                output_dict_list.append(output_dict)
+                output_dict = {}
+    else: # default JOIN 
+        table_selects = {}
+        for index, table in enumerate(tables):
+            table_args = []
+            table_args.append(cols)
+            table_args.append(['from', [table[0]]])
+            table_selects[table[1]] = select(table_args)
+        left_split = left_test.split('.')
+        left_test_name = left_split[0]
+        left_test_var = left_split[1]
+
+        right_split = right_test.split('.')
+        right_test_name = right_split[0]
+        right_test_var = right_split[1]
+
+        conditional_function = opers[conditional]
+        output_dict_list.append(table_selects[left_test_name][0] + table_selects[right_test_name][0])
+        for right_index, right_item in enumerate(table_selects[right_test_name]):
+            if right_index is 0:
+                continue
+            for left_index, left_item in enumerate(table_selects[left_test_name]):
+                if left_index is 0:
+                    continue
+                if conditional_function(left_item[left_test_var], right_item[right_test_var]):
+                    output_dict = {**left_item, **right_item}
+            output_dict_list.append(output_dict)
+    return output_dict_list
 
 def alter(tbName, indexName, input_type):
     table_path = os.path.join(os.getcwd(), tbName)

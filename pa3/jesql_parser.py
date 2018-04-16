@@ -104,8 +104,7 @@ def parse_select(tokens):
         tokens.append(list_arg)
 
     output = jesql_commands.select(tokens)
-    for line in output:
-        print(line)
+    print_select(output)
 
 def parse_alter(tokens):
     if tokens[0].lower() == 'table':
@@ -156,3 +155,15 @@ def parse_update(tokens):
             print('ERROR: near "' + tokens[1] + '": syntax error', file=sys.stderr)
     except IndexError as e:
         print('ERROR: expected arguments missing')
+
+def print_select(select_list):
+    for index, item in enumerate(select_list):
+        if index is 0:
+            for header_index, header_item in enumerate(item):
+                print(' '.join(header_item), end='')
+                if header_index is len(item) - 1:
+                    print('')
+                else:
+                    print('|', end='')
+        else:
+            print('|'.join(item.values()))

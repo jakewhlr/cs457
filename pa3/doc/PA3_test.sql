@@ -15,26 +15,19 @@ insert into Sales values(1,355);
 insert into Sales values(2,544);
 
 -- The following will miss Gill (20 points)
-select hello, my, old, friend
-from Employee E, Sales S, Yo L;
-
 select *
-from Employee E, Sales S, Yo L where lol = lol;
-
-select * from Employee;
-
-  -- from Employee E, Sales S;
-  -- where E.id = S.employeeID;
+from Employee E, Sales S
+where E.id = S.employeeID;
 
 -- This is the same as above but with a different syntax (20 points)
-  -- select *
-  -- from Employee E inner join Sales S
-  -- on E.id = S.employeeID;
+select *
+from Employee E inner join Sales S
+on E.id = S.employeeID;
 
 -- The following will include Gill (30 points)
-  -- select *
-  -- from Employee E left outer join Sales S
-  -- on E.id = S.employeeID;
+select *
+from Employee E left outer join Sales S
+on E.id = S.employeeID;
 
 .exit
 
