@@ -104,6 +104,7 @@ def parse_select(tokens):
         tokens.append(list_arg)
 
     output = jesql_commands.select(tokens)
+    # print(output)
     for line in output:
         print(line)
 
