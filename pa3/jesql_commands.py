@@ -5,6 +5,21 @@ import shutil
 import re
 import operator
 
+# dict of valid comparison operators
+opers = { "<": operator.lt,
+          "<=": operator.le,
+          "=": operator.eq,
+          "!=": operator.ne,
+          ">": operator.gt,
+          ">=": operator.ge,
+        }
+
+# dict of valid data types
+data_types = { "int": int,
+               "float": float,
+               "varchar": str,
+             }
+
 def create():
     pass
 
@@ -63,7 +78,6 @@ def drop_table(name):
     else:
         print ("!Failed to delete", name, "because it does not exist.")
 
-
 def use(name):
     """use named database"""
     database_dir = os.path.join(sys.path[0], "databases")
@@ -91,18 +105,6 @@ def select(args):
     col_header_list = []
     header_list = []
 
-    opers = { "<": operator.lt, # dict of valid comparison operators
-              "<=": operator.le,
-              "=": operator.eq,
-              "!=": operator.ne,
-              ">": operator.gt,
-              ">=": operator.ge,
-          }
-    data_types = { "int": int, # dict of valid types and their respective cast functions
-                   "float": float,
-                   "varchar": str,
-          }
-
     for index, arg in enumerate(args):
         if index is 0:
             cols = arg
@@ -116,7 +118,7 @@ def select(args):
 
     if len(tables) is 1:
         table = tables[0][0]
-        table_path = os.path.join(os.getcwd(), table)
+        table_path = os.path.join(os.getcwd(), table.lower())
         col_indexes = []
         if not os.path.exists(table_path):
             print ("!Failed to query table", table, "because it does not exist.")
@@ -162,7 +164,7 @@ def select(args):
             if output_dict:
                 output_dict_list.append(output_dict)
                 output_dict = {}
-    else: # default JOIN 
+    else: # default JOIN
         table_selects = {}
         for index, table in enumerate(tables):
             table_args = []
@@ -226,26 +228,10 @@ def insert(tbname, values):
     else:
     	print ("!Failed to insert", tbname, "because it does not exist.")
 
-### DELETE:
-# DELETE FROM [table name]
-# WHERE [attribute name] {condition}
 def delete(tbname, conditional, where_attr, where_val):
     if 'databases' not in os.getcwd():
         print("!Failed to read table, no database selected.")
         return 1
-
-    opers = { "<": operator.lt, # dict of valid comparison operators
-              "<=": operator.le,
-              "=": operator.eq,
-              "!=": operator.ne,
-              ">": operator.gt,
-              ">=": operator.ge,
-            }
-
-    data_types = { "int": int,
-                   "float": float,
-                   "varchar": str,
-                 }
 
     records_deleted = 0
     table_path = os.path.join(os.getcwd(), tbname)
@@ -267,20 +253,6 @@ def update(tbname, conditional, set_attr, set_val, where_attr, where_val):
     if 'databases' not in os.getcwd():
         print("!Failed to read table, no database selected.")
         return 1
-
-    opers = { "<": operator.lt, # dict of valid comparison operators
-              "<=": operator.le,
-              "=": operator.eq,
-              "!=": operator.ne,
-              ">": operator.gt,
-              ">=": operator.ge,
-            }
-
-    data_types = { "int": int,
-                   "float": float,
-                   "varchar": str,
-                 }
-
 
     try:
         table_path = os.path.join(os.getcwd(), tbname)
