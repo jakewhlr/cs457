@@ -37,6 +37,7 @@ class Interface(object):
             elif read_input.strip().endswith(';'):
                 read_input = ''.join(read_input.splitlines()).strip()
                 tokens = tokenizer.tokenize(read_input[:-1])
+                tokens = tokenizer.encapsulate_values(tokens)
                 jesql_parser.parse(tokens)
                 read_input = ''
             elif not read_input.strip(' '):

@@ -8,8 +8,6 @@ def tokenize(raw_input):
     tokens[:] = (value for value in tokens if value != ' ')
     # remove any hidden tab characters
     tokens = [token.replace('\t', '') for token in tokens]
-    # encapsulate the data between parenthesis for easier passing around
-    tokens = encapsulate_values(tokens)
 
     return tokens
 
