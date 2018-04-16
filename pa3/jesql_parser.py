@@ -3,11 +3,13 @@ import sys
 import tokenizer
 
 def parse(tokens):
-    sub_parser = 'parse_' + tokens[0].lower()
-    if sub_parser not in dir(sys.modules[__name__]):
-        print('ERROR: near "' + tokens[0] + '": syntax error', file=sys.stderr)
-    else:
-        globals()[sub_parser](tokens[1:])
+    # check to make sure that actual data was passed in
+    if tokens:
+        sub_parser = 'parse_' + tokens[0].lower()
+        if sub_parser not in dir(sys.modules[__name__]):
+            print('ERROR: near "' + tokens[0] + '": syntax error', file=sys.stderr)
+        else:
+            globals()[sub_parser](tokens[1:])
 
 def parse_create(tokens):
     if tokens[0].lower() == 'database':
