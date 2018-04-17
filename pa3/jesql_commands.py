@@ -116,7 +116,7 @@ def select(args):
 
     if len(tables) is 1:
         table = tables[0][0]
-        table_path = os.path.join(os.getcwd(), table)
+        table_path = os.path.join(os.getcwd(), table.lower())
         col_indexes = []
         if not os.path.exists(table_path):
             print ("!Failed to query table", table, "because it does not exist.")
@@ -162,7 +162,7 @@ def select(args):
             if output_dict:
                 output_dict_list.append(output_dict)
                 output_dict = {}
-    else: # default JOIN 
+    else: # default JOIN
         table_selects = {}
         for index, table in enumerate(tables):
             table_args = []
