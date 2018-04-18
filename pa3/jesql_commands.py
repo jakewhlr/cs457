@@ -292,6 +292,8 @@ class Reader(object):
             self.file.close()
 
     def __iter__(self):
+        if self.line_num != 1:
+            self.line_num = 0
         return self
 
     def __next__(self):
