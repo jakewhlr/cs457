@@ -1,5 +1,7 @@
-import sys
+import jesql_utils
 import operator
+import sys
+import os
 
 # select *
 # from Employee E, Sales S
@@ -17,7 +19,7 @@ class Statement(object):
     """class docstring"""
     def __init__(self, tokens):
         self.tokens = tokens
-        self.result_columns = None
+        self.result_column = None
         self.subquery = None
         self.join_clause = None
         self.expression = None
@@ -32,13 +34,13 @@ class Statement(object):
 
 
     def __str__(self):
-        return 'result_columns: {}\nsubquery: {}\nexpression: {}'.format(self.result_columns, self.subquery, self.expression)
+        return 'result_column: {}\nsubquery: {}\njoin_clause: {}\nexpression: {}'.format(self.result_column, self.subquery, self.join_clause, self.expression)
 
     def evaluate_tokens(self):
         if self.tokens:
             remaining_tokens, rc = self.evaluate_clause(self.tokens, 'from')
             remaining_tokens, sq = self.evaluate_clause(remaining_tokens[1:], 'where', 'inner', 'left')
-            self.result_columns = ResultColumn(rc)
+            self.result_column = ResultColumn(rc)
             self.subquery = Subquery(sq)
 
             if not remaining_tokens:
@@ -46,10 +48,10 @@ class Statement(object):
             elif remaining_tokens[0] == 'where':
                 self.expression = Expression(remaining_tokens[1:])
             else:
-                # one of the join clauses
-                pass
+                remaining_tokens, jc = self.evaluate_clause(remaining_tokens, 'join', include_delimiter=True)
+                self.join_clause = JoinClause(jc)
 
-    def evaluate_clause(self, tokens, *delimiters):
+    def evaluate_clause(self, tokens, *delimiters, include_delimiter=False):
         if delimiters:
             delimiter_index = -1
             expression = []
@@ -58,6 +60,8 @@ class Statement(object):
                 for delimiter in delimiters:
                     if token.lower() == delimiter.lower():
                         delimiter_index = index
+                        if include_delimiter:
+                            expression.append(token)
                         break
                 if delimiter_index == -1:
                     expression.append(token)
@@ -69,6 +73,7 @@ class Statement(object):
 
         else:
             print('ERROR: evaluate_clause: no delimiters specified', file=sys.stderr)
+
 
 class ResultColumn(object):
     def __init__(self, tokens):
@@ -109,16 +114,34 @@ class ResultColumn(object):
 
         return '[{}]'.format(output_string)
 
+    def __iter__(self):
+        self.result_index = 0
+        return self
+
+    def __next__(self):
+        if self.result_index >= len(self.table_names):
+            raise StopIteration
+        else:
+            table_name = self.table_names[self.result_index]
+            column_name = self.column_names[self.result_index]
+
+            self.result_index += 1
+            return table_name, column_name
+
     def parse_result_column(self):
         table_count = 0
         column_count = 0
         for token in self.tokens:
             if '.' in token:
                 split_token = token.split('.')
-                self.table_names.append(split_token[0])
-                self.column_names.append(split_token[1].replace(',', ''))
-                table_count += 1
-                column_count += 1
+
+                if split_token[1] == '*':
+                    self.evaluate_splat(split_token[0])
+                else:
+                    self.table_names.append(split_token[0])
+                    self.column_names.append(split_token[1].replace(',', ''))
+                    table_count += 1
+                    column_count += 1
             else:
                 self.table_names.append(None)
                 self.column_names.append(token)
@@ -126,6 +149,19 @@ class ResultColumn(object):
 
         if table_count != column_count and table_count != 0:
             print('ERROR: parse_result_column: expected "." missing', file=sys.stderr)
+
+    def evaluate_splat(self, table):
+        table_path = os.path.join(os.getcwd(), table)
+
+        jesql_reader = jesql_utils.Reader(table_path, is_file=True)
+        header = jesql_reader.read_header()
+        for header_col in header:
+            self.table_names.append(table)
+            self.column_names.append(header_col['name'])
+
+    def pop(self):
+        self.table_names.pop(0)
+        self.column_names.pop(0)
 
 
 class Subquery(object):
@@ -197,6 +233,37 @@ class Subquery(object):
 
             for index, alias in enumerate(self.aliases):
                 self.aliases[index] = alias.replace(',', '')
+
+
+class JoinClause(object):
+    def __init__(self, tokens):
+        self.tokens = tokens
+        self.join_type = None
+        self.join_modifier = None
+
+        self.parse_join()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, traceback):
+        pass
+
+    def __str__(self):
+        return '{{join_type: "{}", join_modifier: "{}"}}'.format(self.join_type, self.join_modifier)
+
+
+    def parse_join(self):
+        if self.tokens[0] == 'join' or self.tokens[0] == 'inner':
+            self.join_type = 'inner'
+        elif self.tokens[0] == 'left':
+            self.join_type = 'outer'
+            self.join_modifier = 'left'
+        elif self.tokens[0] == 'right':
+            self.join_type = 'outer'
+            self.join_modifier = 'right'
+        else:
+            print('ERROR: parse_join: invalid join type specified', file=sys.stderr)
 
 
 class Expression(object):
