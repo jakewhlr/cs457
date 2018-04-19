@@ -159,6 +159,13 @@ class ResultColumn(object):
             self.table_names.append(table)
             self.column_names.append(header_col['name'])
 
+    def insert_alias(self, subquery):
+        for index, (table, column) in enumerate(zip(self.table_names, self.column_names)):
+            for sq_table, sq_alias in zip(subquery.tables, subquery.aliases):
+                if table == sq_table:
+                    if sq_alias:
+                        self.column_names[index] = sq_alias + '.' + column
+
     def pop(self):
         self.table_names.pop(0)
         self.column_names.pop(0)
@@ -224,15 +231,17 @@ class Subquery(object):
 
     def parse_subquery(self):
         # if the subquery was just a table
-        if len(self.tokens) == 1:
-            self.tables.append(self.tokens[0])
-            self.aliases.append(None)
-        else:
-            self.tables = self.tokens[0::2]
-            self.aliases = self.tokens[1::2]
+        token_string = ' '.join(self.tokens)
+        new_tokens = token_string.split(',')
 
-            for index, alias in enumerate(self.aliases):
-                self.aliases[index] = alias.replace(',', '')
+        for token in new_tokens:
+            split_tokens = token.strip().split(' ')
+            if len(split_tokens) == 2:
+                self.tables.append(split_tokens[0])
+                self.aliases.append(split_tokens[1])
+            else:
+                self.tables.append(split_tokens[0])
+                self.aliases.append(None)
 
 
 class JoinClause(object):
