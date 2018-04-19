@@ -4,6 +4,7 @@ import sys
 import shutil
 import re
 import operator
+import jesql_utils
 
 # dict of valid comparison operators
 opers = { "<": operator.lt,
@@ -89,108 +90,120 @@ def use(name):
     else:
         print ("!Failed to use", name, "because it does not exist.")
 
-def select(args):
-    """Selects columns from given table, prints output"""
 
-    cols = None # Columns to select
-    tables = None # Tables to select from
-    left_test = None # Left thing to test
-    conditional = None # Conditional function
-    right_test = None # Right thing to test
-    subquery = False # Bool to determine if where is used
-    output_lines = []
-    output_line = ''
-    output_dict = {}
-    output_dict_list = []
-    col_header_list = []
-    header_list = []
+# create table Employee(id int, name varchar(10));
+# create table Sales(employeeID int, productID int);
 
-    for index, arg in enumerate(args):
-        if index is 0:
-            cols = arg
-        elif arg[0] is 'from':
-            tables = arg[1:]
-        elif arg[0] is 'where':
-            subquery = True
-            left_test = arg[1][0]
-            conditional = arg[1][1]
-            right_test = arg[1][2]
+# select *
+# from Employee E, Sales S
+# where E.id = S.employeeID;
 
-    if len(tables) is 1:
-        table = tables[0][0]
-        table_path = os.path.join(os.getcwd(), table.lower())
-        col_indexes = []
-        if not os.path.exists(table_path):
+# id int|name varchar(10)|employeeID int|productID int
+# 1|Joe|1|344
+# 1|Joe|1|355
+# 2|Jack|2|544
+
+def select(stmt):
+    table_paths = []
+    jesql_readers = []
+    headers = []
+    rc_tables = []
+    final_table = []
+
+    # begin pre-processing
+    for table, alias in stmt.subquery:
+        new_table_path = os.path.join(os.getcwd(), table)
+        if os.path.exists(new_table_path):
+            table_paths.append(new_table_path)
+            jesql_readers.append(jesql_utils.Reader(new_table_path, is_file=True, alias=alias))
+            headers.append(jesql_readers[-1].read_header())
+
+            # If the result column still contains a '*'
+            for rc_table, rc_column in stmt.result_column:
+                if rc_column == '*':
+                    if rc_table:
+                        stmt.result_column.evaluate_splat(rc_table)
+                    else:
+                        stmt.result_column.evaluate_splat(table)
+        else:
             print ("!Failed to query table", table, "because it does not exist.")
             return
 
-        with open(table_path) as input_file:
-            lines = input_file.readlines()
+    # Check once more if * was evaluated and pop it off if necessary
+    if stmt.result_column.column_names[0] == '*':
+        stmt.result_column.pop()
 
-        for index, line in enumerate(lines):
-            lines[index] = line.split('|')
-            for col_index, col in enumerate(lines[index]):
-                lines[index][col_index] = col.strip()
+    # Generate the final header for later
+    final_header = ''
+    stmt.result_column.insert_alias(stmt.subquery)
+    for header in headers:
+        for header_col in header:
+            for column in stmt.result_column.column_names:
+                if header_col['name'] == column:
+                    final_header += header_col['name'] + ' ' + header_col['type'] + ' | '
+    final_table.append(final_header[:-3])
 
-        for header_index, header in enumerate(lines[0]):
-            col_header_list.append(header.split(' ', 1))
-            lines[0][header_index] = header.split(' ')
-            if lines[0][header_index][0] in cols: # if col matches, note index
-                col_indexes.append(header_index)
-            if subquery and lines[0][header_index][0] == left_test:
-                test_index = header_index
-                test_type = data_types[lines[0][header_index][1].split("(")[0].strip()]
+    # read in all data specified in result column
+    output_row = ''
+    for jesql_reader in jesql_readers: # iterate over each table
+        current_output = []
+        current_output.append(jesql_reader.rows[0])
+        for index, row in jesql_reader: # iterate over each row in table
+            for key, value in row.items(): # iterate over each col in row
+                for table_name, column_name in stmt.result_column: # iterate over statement result column
+                    if key == column_name:
+                        output_row += value + ' | '
+            current_output.append(output_row[:-3])
+            output_row = ''
+        rc_tables.append(current_output)
 
-        for outer_index, outer_item in enumerate(col_header_list):
-            for inner_index, inner_item in enumerate(outer_item):
-                col_header_list[outer_index][inner_index] = re.sub(' ', '', inner_item)
-        output_dict_list.append(col_header_list)
-        col_header_list = []
+    # prune data specified by join clause
+    if stmt.join_clause:
+        if stmt.join_clause.join_type == 'inner':
+            pass
+        else: # outer
+            if stmt.join_clause.join_modifier == 'left':
+                pass
+            else: # right
+                pass
 
-        if '*' in cols: # '*' selects all columns
-            col_indexes = range(0, len(lines[0]))
+    # prune data specified by where clause
+    if stmt.expression:
+        where_table = []
+        # assign a reader to right and left table
+        for table in rc_tables:
+            table_reader = jesql_utils.Reader(table)
+            table_header = table_reader.read_header()
 
-        for row_index, row in enumerate(lines):
-            if row_index is 0:
-                continue
-            if subquery:
-                if opers[conditional](test_type(re.sub('\'|\"', '', row[test_index])), test_type(re.sub('\'|\"', '', right_test))):
-                    for col in col_indexes:
-                        output_dict[output_dict_list[0][col][0]] = re.sub('\'|\"', '', row[col])
-            else:
-                for col in col_indexes:
-                    output_dict[output_dict_list[0][col][0]] = re.sub('\'|\"', '', row[col])
+            for column in table_header:
+                if stmt.expression.left_value == column['name']:
+                    left_reader = table_reader
+                    left_header = table_header
+                if stmt.expression.right_value == column['name']:
+                    right_reader = table_reader
+                    right_header = table_header
 
-            if output_dict:
-                output_dict_list.append(output_dict)
-                output_dict = {}
-    else: # default JOIN
-        table_selects = {}
-        for index, table in enumerate(tables):
-            table_args = []
-            table_args.append(cols)
-            table_args.append(['from', [table[0]]])
-            table_selects[table[1]] = select(table_args)
-        left_split = left_test.split('.')
-        left_test_name = left_split[0]
-        left_test_var = left_split[1]
+        for l_index, l_row in left_reader:
+            for r_index, r_row in right_reader:
+                formatted_row = ''
+                if stmt.expression.oper(l_row[stmt.expression.left_value], r_row[stmt.expression.right_value]):
+                    for l_val in list(l_row.values()):
+                        formatted_row += l_val.strip("'") + ' | '
+                    for r_val in list(r_row.values()):
+                        formatted_row += r_val.strip("'") + ' | '
 
-        right_split = right_test.split('.')
-        right_test_name = right_split[0]
-        right_test_var = right_split[1]
+                    where_table.append(formatted_row[:-3])
 
-        conditional_function = opers[conditional]
-        output_dict_list.append(table_selects[left_test_name][0] + table_selects[right_test_name][0])
-        for right_index, right_item in enumerate(table_selects[right_test_name]):
-            if right_index is 0:
-                continue
-            for left_index, left_item in enumerate(table_selects[left_test_name]):
-                if left_index is 0:
-                    continue
-                if conditional_function(left_item[left_test_var], right_item[right_test_var]):
-                    output_dict = {**left_item, **right_item}
-            output_dict_list.append(output_dict)
-    return output_dict_list
+        final_table += where_table
+
+    # if neither other clause was run, generate the final table
+    if not stmt.join_clause and not stmt.expression:
+        final_table_tup = zip(*rc_tables)
+        for row in final_table_tup:
+            final_table.append(' | '.join(map(str, row)))
+        del final_table[1]
+
+    return final_table
 
 def alter(tbName, indexName, input_type):
     table_path = os.path.join(os.getcwd(), tbName)
@@ -235,7 +248,7 @@ def delete(tbname, conditional, where_attr, where_val):
 
     records_deleted = 0
     table_path = os.path.join(os.getcwd(), tbname)
-    jesql_reader = Reader(table_path)
+    jesql_reader = jesql_utils.Reader(table_path, is_file=True)
     header = jesql_reader.read_header()
     for header_col in header:
         if header_col['name'] == where_attr:
@@ -256,7 +269,7 @@ def update(tbname, conditional, set_attr, set_val, where_attr, where_val):
 
     try:
         table_path = os.path.join(os.getcwd(), tbname)
-        jesql_reader = Reader(table_path)
+        jesql_reader = jesql_utils.Reader(table_path, is_file=True)
         header = jesql_reader.read_header()
 
         for header_col in header:
@@ -273,65 +286,3 @@ def update(tbname, conditional, set_attr, set_val, where_attr, where_val):
         print(records_updated, 'records modified.')
     except FileNotFoundError:
         print('ERROR: Invalid table name')
-
-class Reader(object):
-    def __init__(self, filename, delimiter='|'):
-        self.filename = filename
-        self.delimiter = delimiter
-        self.columns = []
-        self.rows = []
-        self.line_num = 0
-
-        self.read_file()
-
-    def __enter__(self):
-        pass
-
-    def __exit__(self):
-        if self.file:
-            self.file.close()
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        if self.line_num >= len(self.rows):
-            raise StopIteration
-        else:
-            line = self.rows[self.line_num]
-            row = {}
-            for index, row_vals in enumerate(line.split(self.delimiter)):
-                row_vals = row_vals.strip()
-                row[self.columns[index]['name']] = row_vals
-
-            self.line_num += 1
-            return self.line_num - 1, row
-
-    def read_header(self):
-        header = self.rows[0]
-        for column in header.split(self.delimiter):
-            column = column.strip()
-            column_vals = column.split(' ')
-            self.columns.append({'name': column_vals[0], 'type': column_vals[1]})
-        self.line_num += 1
-
-        return self.columns
-
-    def read_file(self):
-        with open(self.filename, 'r') as file:
-            self.rows = file.readlines()
-
-    def update_row(self, index, row):
-        raw_row = ''
-        for key, value in row.items():
-            raw_row += value + ' | '
-        raw_row = raw_row[:-2]
-        raw_row += '\n'
-        self.rows[index] = raw_row
-
-    def delete_row(self, index):
-        del self.rows[index]
-
-    def write_file(self):
-        with open(self.filename, 'w') as file:
-            file.writelines(self.rows)
