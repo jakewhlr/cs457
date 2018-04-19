@@ -1,6 +1,8 @@
 import jesql_commands
 import sys
 import tokenizer
+import select
+import jesql_utils
 
 def parse(tokens):
     # check to make sure that actual data was passed in
@@ -14,7 +16,7 @@ def parse(tokens):
 def parse_create(tokens):
     if tokens[0].lower() == 'database':
         if len(tokens[1:]) == 1:
-            jesql_commands.create_db(tokens[1].lower())
+            jesql_commands.create_db(tokens[1])
         else:
             print('ERROR: near "' + tokens[-1] + '": syntax error', file=sys.stderr)
 
@@ -22,7 +24,7 @@ def parse_create(tokens):
         if len(tokens[1:]) == 2:
             value_list = tokenizer.decapsulate_values(tokens[2])
             value_list = [value.strip() for value in value_list]
-            jesql_commands.create_table(tokens[1].lower(), value_list)
+            jesql_commands.create_table(tokens[1], value_list)
         else:
             print('ERROR: near "' + tokens[-1] + '": syntax error', file=sys.stderr)
 
@@ -47,66 +49,16 @@ def parse_drop(tokens):
 
 def parse_use(tokens):
     if len(tokens) == 1:
-        jesql_commands.use(tokens[0].lower())
+        jesql_commands.use(tokens[0])
     else:
         print('ERROR: near "' + tokens[-1] + '": syntax error', file=sys.stderr)
 
 # TODO
 def parse_select(tokens):
-    # parse columns, place into sublists
-    list_arg = []
-    newargs = []
-    for index, arg in enumerate(tokens):
-        if arg.strip().lower() == 'from':
-            from_index = index
-            break
-        list_arg.append(arg)
-    for index in range(0, len(list_arg)):
-        del tokens[0]
-    for index, item in enumerate(list_arg):
-        list_arg[index] = item.replace(',', '')
-    tokens.insert(0, list_arg)
-
-    # parse tables list, place into sublists
-    list_item = []
-    list_arg = []
-    where_index = len(tokens)
-    for index, arg in enumerate(tokens):
-        if index < 2:
-            continue
-        if arg.strip().lower() == 'where':
-            where_index = index
-            break
-        list_item.append(arg)
-        if arg.endswith(','):
-            for list_index, item in enumerate(list_item):
-                list_item[list_index] = item.replace(',', '')
-            list_arg.append(list_item)
-            list_item = []
-    if list_item:
-        list_arg.append(list_item)
-    for index in range (1, where_index):
-        del tokens[1]
-    list_arg.insert(0, 'from')
-    tokens.insert(1, list_arg)
-
-    # parse where list, place into sublists
-    list_item = []
-    list_arg = []
-    for index, arg in enumerate(tokens):
-        if index < 3:
-            continue
-        list_item.append(arg)
-
-    for index in range (2, len(tokens)):
-        del tokens[2]
-    if list_item:
-        list_arg.append('where')
-        list_arg.append(list_item)
-        tokens.append(list_arg)
-
-    output = jesql_commands.select(tokens)
-    print_select(output)
+    stmt = select.Statement(tokens)
+    output = jesql_commands.select(stmt)
+    for row in output:
+        print(row)
 
 def parse_alter(tokens):
     if tokens[0].lower() == 'table':
@@ -124,7 +76,7 @@ def parse_insert(tokens):
             value_list = tokenizer.decapsulate_values(tokens[3])
             value_list = [value.strip() for value in value_list]
 
-            jesql_commands.insert(tokens[1].lower(), value_list)
+            jesql_commands.insert(tokens[1], value_list)
         else:
             print('ERROR: near "' + tokens[-1] + '": syntax error', file=sys.stderr)
 
