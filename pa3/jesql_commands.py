@@ -108,6 +108,7 @@ def select(stmt):
     jesql_readers = []
     headers = []
     rc_tables = []
+    final_table = []
 
     # begin pre-processing
     for table, alias in stmt.subquery:
@@ -118,8 +119,12 @@ def select(stmt):
             headers.append(jesql_readers[-1].read_header())
 
             # If the result column still contains a '*'
-            if stmt.result_column.column_names[0] == '*':
-                stmt.result_column.evaluate_splat(table)
+            for rc_table, rc_column in stmt.result_column:
+                if rc_column == '*':
+                    if rc_table:
+                        stmt.result_column.evaluate_splat(rc_table)
+                    else:
+                        stmt.result_column.evaluate_splat(table)
         else:
             print ("!Failed to query table", table, "because it does not exist.")
             return
@@ -127,6 +132,16 @@ def select(stmt):
     # Check once more if * was evaluated and pop it off if necessary
     if stmt.result_column.column_names[0] == '*':
         stmt.result_column.pop()
+
+    # Generate the final header for later
+    final_header = ''
+    stmt.result_column.insert_alias(stmt.subquery)
+    for header in headers:
+        for header_col in header:
+            for column in stmt.result_column.column_names:
+                if header_col['name'] == column:
+                    final_header += header_col['name'] + ' ' + header_col['type'] + ' | '
+    final_table.append(final_header[:-3])
 
     # read in all data specified in result column
     output_row = ''
@@ -136,22 +151,11 @@ def select(stmt):
         for index, row in jesql_reader: # iterate over each row in table
             for key, value in row.items(): # iterate over each col in row
                 for table_name, column_name in stmt.result_column: # iterate over statement result column
-                    for table, alias in stmt.subquery: # iterate over subquery, check for aliases
-                        if table == table_name:
-                            if alias:
-                                column_name = '{}.{}'.format(alias, column_name)
                     if key == column_name:
                         output_row += value + ' | '
             current_output.append(output_row[:-3])
             output_row = ''
         rc_tables.append(current_output)
-
-
-    # create a 'final' from the result column in case there are no more clauses
-    final_table_tup = zip(*rc_tables)
-    final_table = []
-    for row in final_table_tup:
-        final_table.append(' | '.join(map(str, row)))
 
     # prune data specified by join clause
     if stmt.join_clause:
@@ -166,6 +170,7 @@ def select(stmt):
     # prune data specified by where clause
     if stmt.expression:
         where_table = []
+        # assign a reader to right and left table
         for table in rc_tables:
             table_reader = jesql_utils.Reader(table)
             table_header = table_reader.read_header()
@@ -178,8 +183,6 @@ def select(stmt):
                     right_reader = table_reader
                     right_header = table_header
 
-        where_table.append(left_reader.rows[0] + ' | ' + right_reader.rows[0])
-
         for l_index, l_row in left_reader:
             for r_index, r_row in right_reader:
                 formatted_row = ''
@@ -191,7 +194,14 @@ def select(stmt):
 
                     where_table.append(formatted_row[:-3])
 
-        final_table = where_table
+        final_table += where_table
+
+    # if neither other clause was run, generate the final table
+    if not stmt.join_clause and not stmt.expression:
+        final_table_tup = zip(*rc_tables)
+        for row in final_table_tup:
+            final_table.append(' | '.join(map(str, row)))
+        del final_table[1]
 
     return final_table
 
