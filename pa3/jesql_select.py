@@ -50,6 +50,9 @@ class Statement(object):
             else:
                 remaining_tokens, jc = self.evaluate_clause(remaining_tokens, 'join', include_delimiter=True)
                 self.join_clause = JoinClause(jc)
+                remaining_tokens, jtable = self.evaluate_clause(remaining_tokens[1:], 'on')
+                self.subquery.insert(jtable)
+                self.expression = Expression(remaining_tokens[1:])
 
     def evaluate_clause(self, tokens, *delimiters, include_delimiter=False):
         if delimiters:
@@ -243,6 +246,15 @@ class Subquery(object):
                 self.tables.append(split_tokens[0])
                 self.aliases.append(None)
 
+    def insert(self, tokens):
+        if len(tokens) == 1:
+            self.tables.append(tokens[0])
+            self.aliases.append(None)
+        if len(tokens) == 2:
+            self.tables.append(tokens[0])
+            self.aliases.append(tokens[1])
+        else:
+            print('ERROR: insert: invalid number of arguments supplie', file=sys.stderr)
 
 class JoinClause(object):
     def __init__(self, tokens):

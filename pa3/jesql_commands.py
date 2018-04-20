@@ -160,11 +160,14 @@ def select(stmt):
     # prune data specified by join clause
     if stmt.join_clause:
         if stmt.join_clause.join_type == 'inner':
+            # put inner code here
             pass
         else: # outer
             if stmt.join_clause.join_modifier == 'left':
+                # put left code here
                 pass
             else: # right
+                # put right code here
                 pass
 
     # prune data specified by where clause
