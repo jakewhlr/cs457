@@ -14,7 +14,9 @@ value1 | value2
 Attributes that are selected from tables are loaded into two dimensional lists and parsed to output any associated values, or alter attributes.
 
 ## Usage
-The program can be run with: `python3 app.py`
+**REQUIRES PYTHON 3.6**
+
+The program can be run with: `python3.6 app.py`
 The following commands can be used:
 ```
 CREATE DATABASE <database name>;
