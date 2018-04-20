@@ -1,7 +1,7 @@
 import jesql_commands
 import sys
 import tokenizer
-import select
+import jesql_select
 import jesql_utils
 
 def parse(tokens):
@@ -55,10 +55,13 @@ def parse_use(tokens):
 
 # TODO
 def parse_select(tokens):
-    stmt = select.Statement(tokens)
+    stmt = jesql_select.Statement(tokens)
     output = jesql_commands.select(stmt)
-    for row in output:
-        print(row)
+    if output:
+        for row in output:
+            print(row)
+    else:
+        print('select returned no results')
 
 def parse_alter(tokens):
     if tokens[0].lower() == 'table':
