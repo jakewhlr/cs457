@@ -11,12 +11,14 @@ This database metadata management application is implemented using Python 3, and
 attribute_name1 attribute_type1 | attribute_name2 attribute_type2
 value1 | value2
 ```
-Attributes that are selected from tables are loaded into two dimensional lists and parsed to output any associated values, or alter attributes.
+
+Attributes that are selected from tables are loaded into table reader objects and are iterated over to compare to other tables. The joined rows are then formatted for output.
 
 ## Usage
 **REQUIRES PYTHON 3.6**
 
 The program can be run with: `python3.6 app.py`
+For cleaner output when redirecting from a file, it is recommended to use `python3.6 app.py -s < filename`
 The following commands can be used:
 ```
 CREATE DATABASE <database name>;
