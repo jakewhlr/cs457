@@ -157,19 +157,6 @@ def select(stmt):
             output_row = ''
         rc_tables.append(current_output)
 
-    # prune data specified by join clause
-    if stmt.join_clause:
-        if stmt.join_clause.join_type == 'inner':
-            # put inner code here
-            pass
-        else: # outer
-            if stmt.join_clause.join_modifier == 'left':
-                # put left code here
-                pass
-            else: # right
-                # put right code here
-                pass
-
     # prune data specified by where clause
     if stmt.expression:
         where_table = []
@@ -186,7 +173,9 @@ def select(stmt):
                     right_reader = table_reader
                     right_header = table_header
 
+        l_inserted = []
         for l_index, l_row in left_reader:
+            match_found = False
             for r_index, r_row in right_reader:
                 formatted_row = ''
                 if stmt.expression.oper(l_row[stmt.expression.left_value], r_row[stmt.expression.right_value]):
@@ -194,10 +183,31 @@ def select(stmt):
                         formatted_row += l_val.strip("'") + ' | '
                     for r_val in list(r_row.values()):
                         formatted_row += r_val.strip("'") + ' | '
-
+                    match_found = True
                     where_table.append(formatted_row[:-3])
-
+                l_inserted.append(match_found)
         final_table += where_table
+
+        if stmt.join_clause:
+            if stmt.join_clause.join_modifier == 'left':
+                for (index, row), result in zip(left_reader, l_inserted):
+                    if not result:
+                        formatted_row = ''
+                        for key, value in row.items():
+                            formatted_row += value.strip("'") + ' | '
+                        final_table.append(formatted_row + ' | ')
+
+    # prune data specified by join clause
+    if stmt.join_clause:
+        if stmt.join_clause.join_type == 'inner':
+            # put inner code here
+            pass
+        else: # outer
+            if stmt.join_clause.join_modifier == 'left':
+                pass
+            else: # right
+                # put right code here
+                pass
 
     # if neither other clause was run, generate the final table
     if not stmt.join_clause and not stmt.expression:
