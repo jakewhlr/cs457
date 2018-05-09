@@ -12,7 +12,6 @@ class Reader(object):
         if is_file:
             self.read_file()
 
-
     def __enter__(self):
         pass
 

@@ -45,7 +45,6 @@ class Interface(object):
             elif read_input == ' \n': # just pressing enter returns <space><newline>
                 read_input = ''
 
-
     def read_config_file(self, filename):
         """Reads in a specified config file."""
         config = configparser.ConfigParser()

@@ -90,19 +90,6 @@ def use(name):
     else:
         print ("!Failed to use", name, "because it does not exist.")
 
-
-# create table Employee(id int, name varchar(10));
-# create table Sales(employeeID int, productID int);
-
-# select *
-# from Employee E, Sales S
-# where E.id = S.employeeID;
-
-# id int|name varchar(10)|employeeID int|productID int
-# 1|Joe|1|344
-# 1|Joe|1|355
-# 2|Jack|2|544
-
 def select(stmt):
     table_paths = []
     jesql_readers = []
