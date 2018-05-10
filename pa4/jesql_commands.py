@@ -75,7 +75,10 @@ def drop_table(name):
 
     # check if table exists and remove the file
     if os.path.exists(database_dir + "/" + name):
-        os.remove(database_dir + "/" + name)
+        if not os.path.exists(database_dir, + "/" + name + ".lock"):
+            os.remove(database_dir + "/" + name)
+        else:
+            print("!Failed to delete", name, "because it currently in use.", file=sys.stderr)
     else:
         print ("!Failed to delete", name, "because it does not exist.")
 
@@ -89,19 +92,6 @@ def use(name):
         print("Using Database", name + ".")
     else:
         print ("!Failed to use", name, "because it does not exist.")
-
-
-# create table Employee(id int, name varchar(10));
-# create table Sales(employeeID int, productID int);
-
-# select *
-# from Employee E, Sales S
-# where E.id = S.employeeID;
-
-# id int|name varchar(10)|employeeID int|productID int
-# 1|Joe|1|344
-# 1|Joe|1|355
-# 2|Jack|2|544
 
 def select(stmt):
     table_paths = []
@@ -299,3 +289,9 @@ def update(tbname, conditional, set_attr, set_val, where_attr, where_val):
         print(records_updated, 'records modified.')
     except FileNotFoundError:
         print('ERROR: Invalid table name')
+
+def begin_transaction():
+    return true;
+
+def commit():
+    return false;

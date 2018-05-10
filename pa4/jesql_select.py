@@ -3,18 +3,6 @@ import operator
 import sys
 import os
 
-# select *
-# from Employee E, Sales S
-# where E.id = S.employeeID;
-
-# select *
-# from Employee E inner join Sales S
-# on E.id = S.employeeID;
-
-# select *
-# from Employee E left outer join Sales S
-# on E.id = S.employeeID;
-
 class Statement(object):
     """class docstring"""
     def __init__(self, tokens):

@@ -113,14 +113,17 @@ def parse_update(tokens):
     except IndexError as e:
         print('ERROR: expected arguments missing')
 
-def print_select(select_list):
-    for index, item in enumerate(select_list):
-        if index is 0:
-            for header_index, header_item in enumerate(item):
-                print(' '.join(header_item), end='')
-                if header_index is len(item) - 1:
-                    print('')
-                else:
-                    print('|', end='')
+def parse_begin(tokens):
+    try:
+        if tokens[0].lower() == 'transaction':
+            jesql_commands.begin_transaction();
         else:
-            print('|'.join(item.values()))
+            print('ERROR: near "' + tokens[0] + '": syntax error', file=sys.stderr)
+    except IndexError as e:
+        print('ERROR: expected arguments missing')
+
+def parse_commit(tokens):
+    if not tokens:
+        jesql_commands.commit():
+    else:
+        print('ERROR: near "' + tokens[0] + '": syntax error', file=sys.stderr)
