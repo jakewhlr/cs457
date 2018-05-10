@@ -80,5 +80,7 @@ class Reader(object):
         del self.rows[index]
 
     def write_file(self):
+        if not self.rows[0].endswith('\n'):
+            self.rows[0] += '\n'
         with open(self.table, 'w') as file:
             file.writelines(self.rows)

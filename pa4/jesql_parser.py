@@ -103,7 +103,7 @@ def parse_update(tokens):
         if tokens[1].lower() == 'set':
             if tokens[3] == '=' and tokens[7] == '=':
                 if tokens[5].lower() == 'where':
-                    jesql_commands.update(tokens[0].lower(), tokens[3], tokens[2], tokens[4], tokens[6], tokens[8])
+                    jesql_commands.update(tokens[0], tokens[3], tokens[2], tokens[4], tokens[6], tokens[8])
                 else:
                     print('ERROR: near "' + tokens[5] + '": syntax error', file=sys.stderr)
             else:
@@ -124,6 +124,6 @@ def parse_begin(tokens):
 
 def parse_commit(tokens):
     if not tokens:
-        jesql_commands.commit():
+        jesql_commands.commit()
     else:
         print('ERROR: near "' + tokens[0] + '": syntax error', file=sys.stderr)

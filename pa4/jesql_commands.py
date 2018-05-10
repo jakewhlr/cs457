@@ -21,6 +21,10 @@ data_types = { "int": int,
                "varchar": str,
              }
 
+transaction_in_progress = False
+jesql_reader = None
+header = None
+
 def create():
     pass
 
@@ -54,7 +58,7 @@ def create_table(name, values):
                 file.write(' | ')
             else:
                 file.write('\n')
-
+        file.close()
         print("Table", name, "created.")
     else:
         print("!Failed to create table", name, "because it already exists.")
@@ -71,16 +75,22 @@ def drop_db(name):
 
 def drop_table(name):
     """Delete database as directory"""
-    database_dir = os.path.join(sys.path[0], "databases")
 
     # check if table exists and remove the file
-    if os.path.exists(database_dir + "/" + name):
-        if not os.path.exists(database_dir, + "/" + name + ".lock"):
-            os.remove(database_dir + "/" + name)
-        else:
-            print("!Failed to delete", name, "because it currently in use.", file=sys.stderr)
-    else:
+    if not os.path.exists(os.path.join(os.getcwd(), name)):
         print ("!Failed to delete", name, "because it does not exist.")
+        return
+
+    # TODO error message
+    if os.path.exists(os.path.join(os.getcwd(), "." + name + "_lock")):
+        print("Error: Table", name, "is locked!")
+        if transaction_in_progress:
+            transaction_in_progress = False # abort
+            print("Transaction abort.")
+        return
+
+    os.remove(os.path.join(os.getcwd(), name))
+    print("deleted", name)
 
 def use(name):
     """use named database"""
@@ -209,10 +219,22 @@ def select(stmt):
     return final_table
 
 def alter(tbName, indexName, input_type):
+    global jesql_reader
+    global transaction_in_progress
+    global header
+
     table_path = os.path.join(os.getcwd(), tbName)
 
     if not os.path.exists(table_path):
         print ("!Failed to query table", tbName, "because it does not exist.")
+        return
+
+    # TODO error message
+    if os.path.exists(os.path.join(os.getcwd(), "." + tbName + "_lock")):
+        print("Error: Table", tbName, "is locked!")
+        if transaction_in_progress:
+            transaction_in_progress = False # abort
+            print("Transaction abort.")
         return
 
     org_file = open(table_path, 'r')
@@ -229,7 +251,24 @@ def alter(tbName, indexName, input_type):
     print("Table" + tbName+" modified.")
 
 def insert(tbname, values):
+    global jesql_reader
+    global transaction_in_progress
+    global header
+
+
     table_path = os.path.join(os.getcwd(), tbname)
+
+    # TODO error message
+    if os.path.exists(os.path.join(os.getcwd(), "." + tbname + "_lock")):
+        print("Error: Table", tbname, "is locked!")
+        if transaction_in_progress:
+            transaction_in_progress = False # abort
+            print("Transaction abort.")
+        return
+    else:
+        if transaction_in_progress:
+            open(os.path.join(os.getcwd(), "." + tbname + "_lock"), 'w').close # create it
+
 
     # check if table exist
     if os.path.exists(table_path):
@@ -245,14 +284,29 @@ def insert(tbname, values):
     	print ("!Failed to insert", tbname, "because it does not exist.")
 
 def delete(tbname, conditional, where_attr, where_val):
+    global jesql_reader
+    global transaction_in_progress
+    global header
+
+
     if 'databases' not in os.getcwd():
         print("!Failed to read table, no database selected.")
         return 1
 
+    # TODO error message
+    if os.path.exists(os.path.join(os.getcwd(), "." + tbname + "_lock")):
+        print("Error: Table", tbname, "is locked!")
+        if transaction_in_progress:
+            transaction_in_progress = False # abort
+            print("Transaction abort.")
+        return
+
     records_deleted = 0
     table_path = os.path.join(os.getcwd(), tbname)
-    jesql_reader = jesql_utils.Reader(table_path, is_file=True)
-    header = jesql_reader.read_header()
+    if not jesql_reader:
+        jesql_reader = jesql_utils.Reader(table_path, is_file=True)
+        header = jesql_reader.read_header()
+
     for header_col in header:
         if header_col['name'] == where_attr:
             var_type = data_types[header_col['type']]
@@ -261,19 +315,38 @@ def delete(tbname, conditional, where_attr, where_val):
         if opers[conditional](var_type(row[where_attr]), var_type(where_val)):
             jesql_reader.delete_row(index)
             records_deleted += 1
-    jesql_reader.write_file()
+    if not transaction_in_progress:
+        jesql_reader.write_file()
 
     print(records_deleted, 'records deleted')
 
 def update(tbname, conditional, set_attr, set_val, where_attr, where_val):
+    global jesql_reader
+    global transaction_in_progress
+    global header
+
+
     if 'databases' not in os.getcwd():
         print("!Failed to read table, no database selected.")
         return 1
 
+    # TODO error message
+    if os.path.exists(os.path.join(os.getcwd(), "." + tbname + "_lock")):
+        print("Error: Table", tbname, "is locked!")
+        if transaction_in_progress:
+            transaction_in_progress = False # abort
+            print("Transaction abort.")
+        return
+    else:
+        if transaction_in_progress:
+            open(os.path.join(os.getcwd(), "." + tbname + "_lock"), 'w').close # create it
+
     try:
         table_path = os.path.join(os.getcwd(), tbname)
-        jesql_reader = jesql_utils.Reader(table_path, is_file=True)
-        header = jesql_reader.read_header()
+
+        if not jesql_reader:
+            jesql_reader = jesql_utils.Reader(table_path, is_file=True)
+            header = jesql_reader.read_header()
 
         for header_col in header:
             if header_col['name'] == where_attr:
@@ -285,13 +358,26 @@ def update(tbname, conditional, set_attr, set_val, where_attr, where_val):
                 row[set_attr] = set_val
                 jesql_reader.update_row(index, row)
                 records_updated += 1
-        jesql_reader.write_file()
+        if not transaction_in_progress:
+            jesql_reader.write_file()
         print(records_updated, 'records modified.')
-    except FileNotFoundError:
-        print('ERROR: Invalid table name')
+    except FileNotFoundError as e:
+        print('ERROR: Invalid table name', e)
 
 def begin_transaction():
-    return true;
+    global transaction_in_progress
+    transaction_in_progress = True
+    return
 
 def commit():
-    return false;
+    global jesql_reader
+
+    if jesql_reader:
+        jesql_reader.write_file()
+        transaction_in_progress = False
+        path = jesql_reader.table.split('/')
+        path[-1] = "." + path[-1] + "_lock"
+        lock_path = "/".join(path)
+        os.remove(lock_path)
+
+    return
